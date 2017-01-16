@@ -23,7 +23,7 @@ namespace RPGResource
         public static bool DoesAccountExist(string name)
         {
             var path = Path.Combine(ACCOUNT_FOLDER, name);
-            return Directory.Exists(path);
+            return File.Exists(path);
         }
 
         public static bool IsPlayerLoggedIn(Client player)
