@@ -7,13 +7,15 @@ using GTANetworkServer;
 using GTANetworkShared;
 using System.Threading;
 
-
 public class FreeroamScript : Script
 {
     public FreeroamScript()
     {
         API.onClientEventTrigger += onClientEventTrigger;
+        API.onPlayerConnected += API_onPlayerConnected;
     }
+
+    private static Random Rnd = new Random();
 
     public Dictionary<Client, List<NetHandle>> VehicleHistory = new Dictionary<Client, List<NetHandle>>();
     public Dictionary<string, string> AnimationList = new Dictionary<string, string>
@@ -22,7 +24,7 @@ public class FreeroamScript : Script
         {"guitar", "anim@mp_player_intcelebrationmale@air_guitar air_guitar"},
         {"shagging", "anim@mp_player_intcelebrationmale@air_shagging air_shagging"},
         {"synth", "anim@mp_player_intcelebrationmale@air_synth air_synth"},
-        {"kiss", "anim@mp_player_intcelebrationmale@blow_kiss blow_kiss"},        
+        {"kiss", "anim@mp_player_intcelebrationmale@blow_kiss blow_kiss"},
         {"bro", "anim@mp_player_intcelebrationmale@bro_love bro_love"},
         {"chicken", "anim@mp_player_intcelebrationmale@chicken_taunt chicken_taunt"},
         {"chin", "anim@mp_player_intcelebrationmale@chin_brush chin_brush"},
@@ -50,6 +52,19 @@ public class FreeroamScript : Script
         {"loco", "anim@mp_player_intcelebrationmale@you_loco you_loco"},
         {"handsup", "missminuteman_1ig_2 handsup_base"},
     };
+    public List<VehicleHash> BannedVehicles = new List<VehicleHash>
+    {
+        VehicleHash.CargoPlane,
+    };
+    public List<Vector3> SpawnPositions = new List<Vector3>
+    {
+        new Vector3(-237.172, -650.3887, 33.30411),
+        new Vector3(-276.9281, -642.3959, 33.20348),
+        new Vector3(-284.7394, -679.6924, 33.27827),
+        new Vector3(-219.5132, -697.4506, 33.67715),
+        new Vector3(-172.2065, -666.7617, 40.48457),
+        new Vector3(-344.8585, -691.2588, 32.73247),
+    };
 
     public void onClientEventTrigger(Client sender, string name, object[] args)
     {
@@ -76,11 +91,19 @@ public class FreeroamScript : Script
             {
                 VehicleHistory.Add(sender, new List<NetHandle> { veh });
             }
-            
-            API.setPlayerIntoVehicle(sender, veh, -1);        
+
+            API.setPlayerIntoVehicle(sender, veh, -1);
         }
     }
 
+    private void API_onPlayerConnected(Client player)
+    {
+        var vals = Enum.GetValues(typeof(PedHash)).OfType<PedHash>();
+        var randomSkin = vals.ElementAt(Rnd.Next(vals.Count()));
+        player.setSkin(randomSkin);
+
+        player.position = SpawnPositions[Rnd.Next(SpawnPositions.Count)];
+    }
 
     [Command("me", GreedyArg = true)]
     public void MeCommand(Client sender, string text)
@@ -133,12 +156,12 @@ public class FreeroamScript : Script
     {
         if (!sender.vehicle.IsNull)
         {
-                API.setVehicleMod(sender.vehicle, modIndex, modVar);
-                API.sendChatMessageToPlayer(sender, "Mod applied successfully!");
+            API.setVehicleMod(sender.vehicle, modIndex, modVar);
+            API.sendChatMessageToPlayer(sender, "Mod applied successfully!");
         }
         else
         {
-                API.sendChatMessageToPlayer(sender, "~r~ERROR: ~w~You're not in a vehicle!");
+            API.sendChatMessageToPlayer(sender, "~r~ERROR: ~w~You're not in a vehicle!");
         }
     }
 
@@ -161,13 +184,13 @@ public class FreeroamScript : Script
     {
         if (!sender.vehicle.IsNull)
         {
-                API.setVehiclePrimaryColor(sender.vehicle, primaryColor);
-                API.setVehicleSecondaryColor(sender.vehicle, secondaryColor);
-                API.sendChatMessageToPlayer(sender, "Colors applied successfully!");
+            API.setVehiclePrimaryColor(sender.vehicle, primaryColor);
+            API.setVehicleSecondaryColor(sender.vehicle, secondaryColor);
+            API.sendChatMessageToPlayer(sender, "Colors applied successfully!");
         }
         else
         {
-                API.sendChatMessageToPlayer(sender, "~r~ERROR: ~w~You're not in a vehicle!");
+            API.sendChatMessageToPlayer(sender, "~r~ERROR: ~w~You're not in a vehicle!");
         }
     }
 
@@ -214,7 +237,7 @@ public class FreeroamScript : Script
 
     private Dictionary<Client, NetHandle> labels = new Dictionary<Client, NetHandle>();
 
-    [Command("attachlabel")]    
+    [Command("attachlabel")]
     public void attachtest3(Client sender, string message)
     {
         if (labels.ContainsKey(sender))
@@ -250,7 +273,7 @@ public class FreeroamScript : Script
 
         var prop = API.createObject(API.getHashKey("prop_riot_shield"), API.getEntityPosition(sender.handle), new Vector3());
         API.attachEntityToEntity(prop, sender.handle, "SKEL_L_Hand",
-            new Vector3(0, 0, 0), new Vector3(0f, 0f, 0f)); 
+            new Vector3(0, 0, 0), new Vector3(0f, 0f, 0f));
 
         shields.Add(sender, prop);
     }
@@ -268,13 +291,13 @@ public class FreeroamScript : Script
     {
         if (!sender.vehicle.IsNull)
         {
-                API.setVehicleCustomPrimaryColor(sender.vehicle, primaryRed, primaryGreen, primaryBlue);
-                API.setVehicleCustomSecondaryColor(sender.vehicle, secondaryRed, secondaryGreen, secondaryBlue);
-                API.sendChatMessageToPlayer(sender, "Colors applied successfully!");
+            API.setVehicleCustomPrimaryColor(sender.vehicle, primaryRed, primaryGreen, primaryBlue);
+            API.setVehicleCustomSecondaryColor(sender.vehicle, secondaryRed, secondaryGreen, secondaryBlue);
+            API.sendChatMessageToPlayer(sender, "Colors applied successfully!");
         }
         else
         {
-                API.sendChatMessageToPlayer(sender, "~r~ERROR: ~w~You're not in a vehicle!");
+            API.sendChatMessageToPlayer(sender, "~r~ERROR: ~w~You're not in a vehicle!");
         }
     }
 
@@ -312,10 +335,10 @@ public class FreeroamScript : Script
         }
         else if (!AnimationList.ContainsKey(animation))
         {
-            API.sendChatMessageToPlayer(sender, "~r~ERROR: ~w~Animation not found!");                    
+            API.sendChatMessageToPlayer(sender, "~r~ERROR: ~w~Animation not found!");
         }
         else
-        {   
+        {
             var flag = 0;
             if (animation == "handsup") flag = 1;
 
@@ -323,11 +346,61 @@ public class FreeroamScript : Script
         }
     }
 
-    [Command("car")]
+    private Client getVehicleOwner(NetHandle vehicle)
+    {
+        foreach (var client in VehicleHistory.Keys)
+        {
+            foreach (var v in VehicleHistory[client])
+            {
+                if (v.Value == vehicle.Value)
+                    return client;
+            }
+        }
+        return null;
+    }
+
+    private string getRandomNumberPlate(Client client = null)
+    {
+        if (client != null)
+        {
+            string strClientName = client.name;
+            if (strClientName.Length <= 8)
+                return strClientName.ToUpper();
+        }
+        string strCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        string strRet = "";
+        for (int i = 0; i < 8; i++)
+        {
+            strRet += strCharacters[Rnd.Next(strCharacters.Length)];
+        }
+        return strRet;
+    }
+
+    [Command("car", Alias = "v")]
     public void SpawnCarCommand(Client sender, VehicleHash model)
     {
-        var rot = API.getEntityRotation(sender.handle);
-        var veh = API.createVehicle(model, sender.position, new Vector3(0, 0, rot.Z), 0, 0);
+        if (BannedVehicles.Contains(model))
+        {
+            sender.sendChatMessage("The vehicle ~r~" + model.ToString() + "~s~ is ~r~banned~s~!");
+            return;
+        }
+
+        if (sender.vehicle != null && sender.vehicleSeat == -1)
+        {
+            NetHandle hv = sender.vehicle.handle;
+            var owner = getVehicleOwner(hv);
+            if (owner != null && VehicleHistory.ContainsKey(owner))
+            {
+                VehicleHistory[owner].Remove(hv);
+            }
+            sender.vehicle.delete();
+        }
+
+        var veh = API.createVehicle(model, sender.position, new Vector3(0, 0, sender.rotation.Z), 0, 0);
+        veh.primaryColor = Rnd.Next(158);
+        veh.secondaryColor = Rnd.Next(158);
+        veh.numberPlate = getRandomNumberPlate(sender);
+        veh.numberPlateStyle = Rnd.Next(6);
 
         if (VehicleHistory.ContainsKey(sender))
         {
@@ -342,15 +415,34 @@ public class FreeroamScript : Script
         {
             VehicleHistory.Add(sender, new List<NetHandle> { veh });
         }
-        
-        API.setPlayerIntoVehicle(sender, veh, -1);        
+
+        API.setPlayerIntoVehicle(sender, veh, -1);
+    }
+
+    [Command("repair", Alias = "r")]
+    public void RepairCarCommand(Client sender)
+    {
+        var veh = sender.vehicle;
+        if (veh == null)
+            return;
+        veh.repair();
+    }
+
+    [Command("clearvehicles", Alias = "vc")]
+    public void ClearVehiclesCommand(Client sender)
+    {
+        if (!VehicleHistory.ContainsKey(sender))
+            return;
+        foreach(var veh in VehicleHistory[sender])
+            API.deleteEntity(veh);
+        VehicleHistory[sender].Clear();
     }
 
     [Command("skin")]
     public void ChangeSkinCommand(Client sender, PedHash model)
     {
         API.setPlayerSkin(sender, model);
-        API.sendNativeToPlayer(sender, 0x45EEE61580806D63, sender.handle);        
+        API.sendNativeToPlayer(sender, Hash.SET_PED_DEFAULT_COMPONENT_VARIATION, sender.handle);
     }
 
     [Command("pic")]
@@ -375,7 +467,7 @@ public class FreeroamScript : Script
         API.setEntityPosition(sender.handle, API.getEntityPosition(target.handle));
     }
 
-    [Command("weapon", Alias="w,gun")]
+    [Command("weapon", Alias = "w,gun")]
     public void GiveWeaponCommand(Client sender, WeaponHash weapon)
     {
         API.givePlayerWeapon(sender, weapon, 9999, true, true);
@@ -383,7 +475,7 @@ public class FreeroamScript : Script
 
     [Command("weaponcomponent", Alias = "wcomp,wc")]
     public void GiveWeaponComponentCmd(Client sender, WeaponComponent component)
-    {        
+    {
         API.givePlayerWeaponComponent(sender, API.getPlayerCurrentWeapon(sender), component);
     }
 
