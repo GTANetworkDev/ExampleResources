@@ -9,6 +9,16 @@ namespace RPGResource.Global
 {
     public class GlobalCommands : Script
     {
+        [Flags]
+        public enum AnimationFlags
+        {
+            Loop = 1 << 0,
+            StopOnLastFrame = 1 << 1,
+            OnlyAnimateUpperBody = 1 << 4,
+            AllowPlayerControl = 1 << 5,
+            Cancellable = 1 << 7
+        }
+
         [Command("stats", Group = "Global Commands")]
         public void GetStatistics(Client sender)
         {
@@ -20,7 +30,7 @@ namespace RPGResource.Global
 
             if (API.getEntityData(sender, "WantedLevel") > 0)
             {
-                var crimes = (List<int>) API.getEntityData(sender, "Crimes");
+                var crimes = (List<int>)API.getEntityData(sender, "Crimes");
 
                 string crimeList = string.Join(", ", crimes.Select(i => WantedLevelDataProvider.Crimes.Get(i).Name));
 
@@ -40,5 +50,74 @@ namespace RPGResource.Global
                 }
             }
         }
+
+
+        [Command("me")]
+        public void emotes(Client sender, string text)
+        {
+            string name = "~p~" + sender.name +" " + text;
+            API.sendChatMessageToAll(name);
+
+        }
+
+        [Command("pm")]
+        public void message(Client sender, Client reciever, string text)
+        {
+            API.sendChatMessageToPlayer(reciever, "~r~"+ sender.name + " tells you ", text);
+
+        }
+
+        [Command("shout")]
+        public void shout(Client sender, string text)
+        {
+
+            API.sendChatMessageToAll("~h~~b~" + sender.name + " shouts " + text);
+
+        }
+
+        [Command("give")]
+        public void givemoney (Client sender,Client player,int amount) 
+         {
+
+            if (API.getEntityData(sender, "Money") < amount)
+            {
+
+                API.setEntityData(player, "Money", amount);
+                API.sendChatMessageToPlayer(player, "~g~"+sender.name+" Sent you "+amount);
+            }
+
+            else API.sendChatMessageToPlayer(sender, "~g~You don't have enough money");
+
+         }
+
+        [Command("help")]
+        public void help (Client sender)
+        {
+
+            API.sendChatMessageToPlayer(sender, "/me /pm /kill /shout /give /stop /surrender /time /stats");
+
+        }
+
+        [Command ("surrender")]
+        public void surrender (Client sender)
+        {
+
+            API.playPlayerAnimation(sender, (int)(AnimationFlags.Loop | AnimationFlags.OnlyAnimateUpperBody | AnimationFlags.AllowPlayerControl), "mp_am_hold_up", "handsup_base");
+            sender.removeAllWeapons();
+        }
+
+        [Command("stop")]
+        public void stopanimation (Client sender)
+        {
+            API.stopPlayerAnimation(sender);
+
+        }
+
+        [Command("time")]
+        public void GetTimeCommand(Client sender)
+        {
+            sender.sendChatMessage("~b~Time: " + API.getTime());
+        }
     }
+  
 }
