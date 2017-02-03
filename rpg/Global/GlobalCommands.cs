@@ -79,7 +79,7 @@ namespace RPGResource.Global
         public void givemoney (Client sender,Client player,int amount) 
          {
 
-            if (API.getEntityData(sender, "Money") < amount)
+            if (API.getEntityData(sender, "Money") > amount)
             {
 
                 API.setEntityData(player, "Money", amount+API.getEntityData(player, "Money"));
