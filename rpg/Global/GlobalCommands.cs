@@ -51,6 +51,13 @@ namespace RPGResource.Global
             }
         }
 
+        [Command("loc")]
+        public void ShowLocationCommand(Client sender)
+        {
+            var pos = API.getEntityPosition(sender.handle);
+
+            API.sendChatMessageToPlayer(sender, pos.X + ", " + pos.Y + ", " + pos.Z);
+        }
 
         [Command("me")]
         public void emotes(Client sender, string text)
@@ -79,7 +86,7 @@ namespace RPGResource.Global
         public void givemoney (Client sender,Client player,int amount) 
          {
 
-            if (API.getEntityData(sender, "Money") > amount)
+            if (API.getEntityData(sender, "Money") > amount && amount>0)
             {
 
                 API.setEntityData(player, "Money", amount+API.getEntityData(player, "Money"));
@@ -87,7 +94,7 @@ namespace RPGResource.Global
                 API.setEntityData(sender, "Money", API.getEntityData(sender, "Money")-amount);
             }
 
-            else API.sendChatMessageToPlayer(sender, "~g~You don't have enough money");
+            else API.sendChatMessageToPlayer(sender, "~r~You don't have enough money");
 
          }
 
