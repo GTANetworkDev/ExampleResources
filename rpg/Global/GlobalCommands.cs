@@ -84,6 +84,7 @@ namespace RPGResource.Global
 
                 API.setEntityData(player, "Money", amount);
                 API.sendChatMessageToPlayer(player, "~g~"+sender.name+" Sent you "+amount);
+                API.setEntityData(sender, "Money", API.getEntityData(sender, "Money")-amount);
             }
 
             else API.sendChatMessageToPlayer(sender, "~g~You don't have enough money");
