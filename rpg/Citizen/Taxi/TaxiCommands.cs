@@ -16,6 +16,7 @@ namespace RPGResource.Citizen
                 API.setPlayerIntoVehicle(sender, myvehicle, -1);
                 API.setEntityData(sender, "TAXI", true);
                 API.sendChatMessageToPlayer(sender, "~g~You are now a Taxi driver, once you recieve a notification, type /accept to take the task");
+                API.setEntityData(sender, "TASK", 1.623482);
             }
 
         }
@@ -25,7 +26,7 @@ namespace RPGResource.Citizen
         {
             double id = API.random();
             if (API.getEntityData(sender.handle, "TAXI"))
-                API.call("taxi", "accepted", (Client)sender,id);
+                API.call("Taxi", "accepted", (Client)sender,id);
             else API.sendChatMessageToPlayer(sender, "~r~You are not a taxi driver");
         }
 

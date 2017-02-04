@@ -52,14 +52,13 @@ namespace RPGResource.Citizen
 
         public void useTaxis(Client sender)
         {
-            API.sendChatMessageToPlayer(sender, "~r~This task has already been taken");
             sen = sender;
            senderxcoords = API.getEntityPosition(sender.handle).X;
             senderycoords = API.getEntityPosition(sender.handle).Y;
             List<Client> taxiPlayers = new List<Client>();
             foreach (var driver in API.getAllPlayers())
             {
-                if (API.getEntityData(driver, "TAXI") && API.getEntityData(driver, "TASK") != 1.623482)
+                if (API.getEntityData(driver, "TAXI") && API.getEntityData(driver, "TASK") == 1.623482)
                 {
                     API.sendPictureNotificationToPlayer(driver, sender.name + " is requesting a taxi, would you like to take it?", "CHAR_TAXI", 0, 1, "Downtown Cab Co.", "Job");
 
