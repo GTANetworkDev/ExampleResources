@@ -20,6 +20,9 @@
     <script src="MoneyDisplay.js" type="client" lang="javascript" />
 
     <script src="Citizen/CitizenCommands.cs" type="server" lang="csharp" />
+    <script src="Citizen/Taxi/taxi.cs" type="server" lang="csharp" />
+    <script src="Citizen/Taxi/TaxiCommands.cs" type="server" lang="csharp" />
+    <script src="Citizen/Taxi/taxi.js" type="client" lang="javascript" />
 
     <script src="Cops/CopCommands.cs" type="server" lang="csharp" />
     <script src="Cops/CopUtil.cs" type="server" lang="csharp" />
