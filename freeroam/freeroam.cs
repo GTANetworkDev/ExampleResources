@@ -11,13 +11,42 @@ public class FreeroamScript : Script
 {
     public FreeroamScript()
     {
-        API.onClientEventTrigger += onClientEventTrigger;
-        API.onPlayerConnected += API_onPlayerConnected;
+        API.onResourceStart += OnResourceStartHandler;
+        API.onResourceStop += OnResourceStopHandler;
+        API.onPlayerFinishedDownload += OnPlayerFinishedDownloadHandler;
+        API.onPlayerDisconnected += OnPlayerDisconnectedHandler;
+        API.onClientEventTrigger += OnClientEvent;
     }
 
     private static Random Rnd = new Random();
 
-    public Dictionary<Client, List<NetHandle>> VehicleHistory = new Dictionary<Client, List<NetHandle>>();
+    #region IPLs
+    private string[] YachtIPL = {
+        "hei_yacht_heist",
+        "hei_yacht_heist_enginrm",
+        "hei_yacht_heist_Lounge",
+        "hei_yacht_heist_Bar",
+        "hei_yacht_heist_Bedrm",
+        "hei_yacht_heist_DistantLights",
+        "hei_yacht_heist_LODLights",
+        "hei_yacht_heist_Bridge"
+    };
+
+    private string[] CarrierIPL = {
+        "hei_carrier",
+        "hei_Carrier_int1",
+        "hei_Carrier_int2",
+        "hei_Carrier_int3",
+        "hei_Carrier_int4",
+        "hei_Carrier_int5",
+        "hei_Carrier_int6",
+        "hei_carrier_DistantLights",
+        "hei_carrier_LODLights",
+    };
+    #endregion
+
+    public List<Players> PlayerList { get; set; }
+
     public Dictionary<string, string> AnimationList = new Dictionary<string, string>
     {
         {"finger", "mp_player_intfinger mp_player_int_finger"},
@@ -52,10 +81,12 @@ public class FreeroamScript : Script
         {"loco", "anim@mp_player_intcelebrationmale@you_loco you_loco"},
         {"handsup", "missminuteman_1ig_2 handsup_base"},
     };
+
     public List<VehicleHash> BannedVehicles = new List<VehicleHash>
     {
         VehicleHash.CargoPlane,
     };
+
     public List<Vector3> SpawnPositions = new List<Vector3>
     {
         new Vector3(-237.172, -650.3887, 33.30411),
@@ -66,7 +97,110 @@ public class FreeroamScript : Script
         new Vector3(-344.8585, -691.2588, 32.73247),
     };
 
-    public void onClientEventTrigger(Client sender, string name, object[] args)
+    public class Players
+    {
+        public Players(string sc)
+        {
+            socialClubName = sc;
+        }
+
+        public bool Fresh { get; set; }
+        public string socialClubName { get; set; }
+        public int Skin { get; set; }
+        public Vector3 LastPosition { get; set; }
+        public Vehicle LastVehicle { get; set; }
+        public List<NetHandle> VehicleHistory { get; set; }
+    }
+
+    public class Vehicle
+    {
+        public int Model { get; set; }
+        public int PrimaryColor { get; set; }
+        public int SecondaryColor { get; set; }
+    }
+
+    private void OnResourceStartHandler()
+    {
+        PlayerList = new List<Players>();
+
+        foreach (string element in YachtIPL)
+        {
+            API.requestIpl(element);
+        }
+        foreach (string element in CarrierIPL)
+        {
+            API.requestIpl(element);
+        }
+    }
+
+    private void OnResourceStopHandler()
+    {
+        foreach (string element in YachtIPL)
+        {
+            API.removeIpl(element);
+        }
+        foreach (string element in CarrierIPL)
+        {
+            API.removeIpl(element);
+        }
+    }
+
+    public Players Handle(Client player)
+    {
+        if (PlayerList.FirstOrDefault(op => op.socialClubName == player.socialClubName) == null)
+        {
+            PlayerList.Add(new Players(player.socialClubName) { Fresh = true, VehicleHistory = new List<NetHandle>(), LastVehicle = new Vehicle() });
+        }
+
+        Players Player = PlayerList.First(op => op.socialClubName == player.socialClubName);
+        return Player;
+    }
+
+    private void OnPlayerFinishedDownloadHandler(Client player)
+    {
+        if (Handle(player).Fresh)
+        {
+            var vals = Enum.GetValues(typeof(PedHash)).OfType<PedHash>();
+            var randomSkin = vals.ElementAt(Rnd.Next(vals.Count()));
+            player.setSkin(randomSkin);
+
+            player.position = SpawnPositions[Rnd.Next(SpawnPositions.Count)];
+            return;
+        }
+
+        player.position = Handle(player).LastPosition;
+        player.setSkin((PedHash)Handle(player).Skin);
+
+        if (Handle(player).LastVehicle.Model == 0) return;
+        var veh = API.createVehicle((VehicleHash)Handle(player).LastVehicle.Model, player.position, player.rotation, 0, 0);
+        player.setIntoVehicle(veh, -1);
+        Handle(player).VehicleHistory.Add(veh.handle);
+        player.vehicle.primaryColor = Handle(player).LastVehicle.PrimaryColor;
+        player.vehicle.secondaryColor = Handle(player).LastVehicle.SecondaryColor;
+    }
+
+    private void OnPlayerDisconnectedHandler(Client player, string reason)
+    {
+        Handle(player).LastPosition = player.position;
+        Handle(player).Skin = player.model;
+        if (player.isInVehicle)
+        {
+            Handle(player).LastVehicle.Model = player.vehicle.model;
+            Handle(player).LastVehicle.PrimaryColor = player.vehicle.primaryColor;
+            Handle(player).LastVehicle.SecondaryColor = player.vehicle.secondaryColor;
+        }
+        else { Handle(player).LastVehicle.Model = 0; }
+        foreach (var veh in Handle(player).VehicleHistory)
+        {
+            if (veh == null) continue;
+            API.deleteEntity(veh);
+        }
+        Handle(player).VehicleHistory.Clear();
+        Handle(player).Fresh = false;
+    }
+
+
+    public void OnClientEvent(Client sender, string name, object[] args)
     {
         if (name == "CREATE_VEHICLE")
         {
@@ -78,31 +212,15 @@ public class FreeroamScript : Script
             var rot = API.getEntityRotation(sender.handle);
             var veh = API.createVehicle((VehicleHash)model, sender.position, new Vector3(0, 0, rot.Z), 0, 0);
 
-            if (VehicleHistory.ContainsKey(sender))
+            Handle(sender).VehicleHistory.Add(veh);
+            if (Handle(sender).VehicleHistory.Count > 2)
             {
-                VehicleHistory[sender].Add(veh);
-                if (VehicleHistory[sender].Count > 3)
-                {
-                    API.deleteEntity(VehicleHistory[sender][0]);
-                    VehicleHistory[sender].RemoveAt(0);
-                }
-            }
-            else
-            {
-                VehicleHistory.Add(sender, new List<NetHandle> { veh });
+                API.deleteEntity(Handle(sender).VehicleHistory[0]);
+                Handle(sender).VehicleHistory.RemoveAt(0);
             }
 
             API.setPlayerIntoVehicle(sender, veh, -1);
         }
-    }
-
-    private void API_onPlayerConnected(Client player)
-    {
-        var vals = Enum.GetValues(typeof(PedHash)).OfType<PedHash>();
-        var randomSkin = vals.ElementAt(Rnd.Next(vals.Count()));
-        player.setSkin(randomSkin);
-
-        player.position = SpawnPositions[Rnd.Next(SpawnPositions.Count)];
     }
 
     [Command("me", GreedyArg = true)]
@@ -346,19 +464,6 @@ public class FreeroamScript : Script
         }
     }
 
-    private Client getVehicleOwner(NetHandle vehicle)
-    {
-        foreach (var client in VehicleHistory.Keys)
-        {
-            foreach (var v in VehicleHistory[client])
-            {
-                if (v.Value == vehicle.Value)
-                    return client;
-            }
-        }
-        return null;
-    }
-
     private string getRandomNumberPlate(Client client = null)
     {
         if (client != null)
@@ -385,35 +490,17 @@ public class FreeroamScript : Script
             return;
         }
 
-        if (sender.vehicle != null && sender.vehicleSeat == -1)
-        {
-            NetHandle hv = sender.vehicle.handle;
-            var owner = getVehicleOwner(hv);
-            if (owner != null && VehicleHistory.ContainsKey(owner))
-            {
-                VehicleHistory[owner].Remove(hv);
-            }
-            sender.vehicle.delete();
-        }
-
         var veh = API.createVehicle(model, sender.position, new Vector3(0, 0, sender.rotation.Z), 0, 0);
         veh.primaryColor = Rnd.Next(158);
         veh.secondaryColor = Rnd.Next(158);
         veh.numberPlate = getRandomNumberPlate(sender);
         veh.numberPlateStyle = Rnd.Next(6);
 
-        if (VehicleHistory.ContainsKey(sender))
+        Handle(sender).VehicleHistory.Add(veh);
+        if (Handle(sender).VehicleHistory.Count > 2)
         {
-            VehicleHistory[sender].Add(veh);
-            if (VehicleHistory[sender].Count > 3)
-            {
-                API.deleteEntity(VehicleHistory[sender][0]);
-                VehicleHistory[sender].RemoveAt(0);
-            }
-        }
-        else
-        {
-            VehicleHistory.Add(sender, new List<NetHandle> { veh });
+            API.deleteEntity(Handle(sender).VehicleHistory[0]);
+            Handle(sender).VehicleHistory.RemoveAt(0);
         }
 
         API.setPlayerIntoVehicle(sender, veh, -1);
@@ -431,11 +518,9 @@ public class FreeroamScript : Script
     [Command("clearvehicles", Alias = "vc")]
     public void ClearVehiclesCommand(Client sender)
     {
-        if (!VehicleHistory.ContainsKey(sender))
-            return;
-        foreach(var veh in VehicleHistory[sender])
+        foreach (var veh in Handle(sender).VehicleHistory)
             API.deleteEntity(veh);
-        VehicleHistory[sender].Clear();
+        Handle(sender).VehicleHistory.Clear();
     }
 
     [Command("skin")]
@@ -449,12 +534,6 @@ public class FreeroamScript : Script
     public void SpawnPickupCommand(Client sender, PickupHash pickup)
     {
         API.createPickup(pickup, new Vector3(sender.position.X + 10, sender.position.Y, sender.position.Z), new Vector3(), 100, 0);
-    }
-
-    [Command("countdown")]
-    public void StartGlobalCountdownCommand(Client sender)
-    {
-        API.triggerClientEventForAll("startCountdown");
     }
 
     [Command("tp")]
@@ -485,4 +564,57 @@ public class FreeroamScript : Script
     {
         API.setPlayerWeaponTint(sender, API.getPlayerCurrentWeapon(sender), tint);
     }
+
+    [Command("help", Alias = "cmd,h")]
+    public void HelpCommand(Client sender)
+    {
+        API.sendChatMessageToPlayer(sender, "~h~~g~SERVER~h~~w~: You can press ~h~~g~F1~h~~w~ to open the FREEROAM Menu.");
+        API.sendChatMessageToPlayer(sender, "~h~~g~SERVER~h~~w~: /tp /car /colors /gun /skin /clothes /props /anim /me /suicide");
+        API.sendChatMessageToPlayer(sender, "~h~~g~SERVER~h~~w~: /attachveh /attachlabel /detach /ping /time /online /pm /loadipl");
+    }
+
+    [Command("online")]
+    public void CommandOnline(Client player)
+    {
+        API.sendChatMessageToPlayer(player, "~b~Players Online: ~h~~w~" + API.getAllPlayers().Count);
+    }
+
+    [Command("ping")]
+    public void CommandPing(Client player)
+    {
+        API.sendChatMessageToPlayer(player, "~b~Your Ping: ~w~~h~" + player.ping + " ms");
+    }
+
+    [Command("time")]
+    public void CommandTime(Client player)
+    {
+        API.sendChatMessageToPlayer(player, "The time now is ~g~~h~" + DateTime.Now.ToString("HH:mm") + "~h~ (UTC)");
+        API.sendNotificationToPlayer(player, "Current Time: ~g~~h~" + DateTime.Now.ToString("HH:mm") + "~h~ (UTC)");
+    }
+
+    [Command("suicide")]
+    public void CommandKill(Client player)
+    {
+        API.setPlayerHealth(player, -1);
+    }
+
+    [Command("pm", GreedyArg = true)]
+    public void CommandPM(Client player, Client target, string message)
+    {
+        API.sendChatMessageToPlayer(player, "~y~PM Sent to ~h~" + target.name + "~h~~w~", message);
+        API.playSoundFrontEnd(player, "Click_Fail", "WEB_NAVIGATION_SOUNDS_PHONE");
+        API.sendChatMessageToPlayer(target, "~y~PM From ~h~" + player.name + "~h~~w~", message);
+        API.playSoundFrontEnd(target, "Click", "DLC_HEIST_HACKING_SNAKE_SOUNDS");
+        return;
+    }
+
+    [Command("save")]
+    public void SaveCommand(Client player, string msg = "")
+    {
+        File.AppendAllText(AppDomain.CurrentDomain.BaseDirectory + "positions.txt",
+            "API.setEntityPosition(player, new Vector3(" + API.getEntityPosition(player.handle).X.ToString() + ", " + API.getEntityPosition(player.handle).Y.ToString() + ", " + API.getEntityPosition(player.handle).Z.ToString() + ")); //" + msg + Environment.NewLine +
+            "API.setEntityRotation(player, new Vector3(0f, 0f, " + API.getEntityRotation(player.handle).Z.ToString() + "));" + Environment.NewLine + Environment.NewLine);
+        API.sendChatMessageToPlayer(player, "Your position has been saved to positions.txt");
+    }
+
 }
