@@ -1,5 +1,6 @@
 var x;
 var y;
+string text;
 
 API.onUpdate.connect(function (sender) {
 
@@ -8,52 +9,46 @@ API.onUpdate.connect(function (sender) {
 
     if (0.3 < x && 0.3 < y) {
 
-        API.drawText("NE", 350, 1000, 1, 255, 255, 255, 255, 2, 1, false, true, 0);
+        text="NE";
 
     }
 
     else if (x<-0.3 && 0.3 < y) {
 
-        API.drawText("NW", 350, 1000, 1, 255, 255, 255, 255, 2, 1, false, true, 0);
-
+        text="NW";
     }
 
     else if (0.3 < x && y < -0.3) {
 
-        API.drawText("SE", 350, 1000, 1, 255, 255, 255, 255, 2, 1, false, true, 0);
-
+        text="SE";
     }
 
     else if (x < -0.3 && y < -0.3) {
 
-        API.drawText("SW", 350, 1000, 1, 255, 255, 255, 255, 2, 1, false, true, 0);
-
+        text="SW";
     }
 
     else if (-0.3 < x && x < 0.3 && y < -0.3) {
 
-        API.drawText("S", 350, 1000, 1, 255, 255, 255, 255, 2, 1, false, true, 0);
-
+        text="S";
     }
 
     else if (x < -0.3 && -0.3 < y && y < 0.3) {
 
-        API.drawText("W", 350, 1000, 1, 255, 255, 255, 255, 2, 1, false, true, 0);
-
+        text="W";
     }
 
     else if (0.3 < x && -0.3 < y && y < 0.3) {
 
-        API.drawText("E", 350, 1000, 1, 255, 255, 255, 255, 2, 1, false, true, 0);
-
+        text="E";
     }
 
     else if (-0.3 < x && x < 0.3 && y > 0.3) {
 
-        API.drawText("N", 350, 1000, 1, 255, 255, 255, 255, 2, 1, false, true, 0);
-
+        text="N";
     }
-
+    
+    API.drawText(text, 350, 1000, 1, 255, 255, 255, 255, 2, 1, false, true, 0);
 });
 
 
