@@ -1,6 +1,6 @@
 var x;
 var y;
-string text;
+var text;
 
 API.onUpdate.connect(function (sender) {
 
