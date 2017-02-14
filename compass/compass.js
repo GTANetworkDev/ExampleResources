@@ -1,7 +1,10 @@
-﻿API.onUpdate.connect(function (sender) {
+var x;
+var y;
 
-    var x = API.getGameplayCamDir().X;
-    var y = API.getGameplayCamDir().Y;
+API.onUpdate.connect(function (sender) {
+
+    x = API.getGameplayCamDir().X;
+    y = API.getGameplayCamDir().Y;
 
     if (0.3 < x && 0.3 < y) {
 
