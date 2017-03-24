@@ -484,6 +484,11 @@ public class FreeroamScript : Script
     [Command("car", Alias = "v")]
     public void SpawnCarCommand(Client sender, VehicleHash model)
     {
+        if (API.isPlayerInAnyVehicle(sender))
+        {
+            sender.sendChatMessage("~r~Please exit your current vehicle first.");
+            return;
+        }
         if (BannedVehicles.Contains(model))
         {
             sender.sendChatMessage("The vehicle ~r~" + model.ToString() + "~s~ is ~r~banned~s~!");
