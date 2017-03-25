@@ -7,17 +7,16 @@ using GTANetworkServer;
 using GTANetworkShared;
 using System.Threading;
 
-
 public class AdminScript : Script
 {
-	public AdminScript()
-	{
-		API.onPlayerRespawn += onDeath;
-		API.onPlayerConnected += OnPlayerConnected;
-		API.onUpdate += onUpdate;
-		API.onResourceStart += onResStart;
-		API.onPlayerDisconnected += onPlayerDisconnected;
-	}
+    public AdminScript()
+    {
+        API.onPlayerRespawn += onDeath;
+        API.onPlayerConnected += OnPlayerConnected;
+        API.onUpdate += onUpdate;
+        API.onResourceStart += onResStart;
+        API.onPlayerDisconnected += onPlayerDisconnected;
+    }
 
     #region Commands
 
@@ -30,7 +29,6 @@ public class AdminScript : Script
             case 0:
                 API.sendChatMessageToPlayer(sender, "~r~ERROR:~w~ No account found with your name.");
                 break;
-            case 3:
             case 1:
                 API.sendChatMessageToPlayer(sender, "~g~Login successful!~w~ Logged in as ~b~" + API.getPlayerAclGroup(sender) + "~w~.");
                 break;
@@ -64,21 +62,21 @@ public class AdminScript : Script
         API.logoutPlayer(sender);
     }
 
-   [Command(ACLRequired = true)]
+    [Command(ACLRequired = true)]
     public void Start(Client sender, string resource)
     {
         if (!API.doesResourceExist(resource))
         {
-            API.sendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
+            API.sendChatMessageToPlayer(sender, "~r~No such resource found: "" + resource + """);
         }
         else if (API.isResourceRunning(resource))
         {
-            API.sendChatMessageToPlayer(sender, "~r~Resource \"" + resource + "\" is already running!");
+            API.sendChatMessageToPlayer(sender, "~r~Resource "" + resource + "" is already running!");
         }
         else
         {
             API.startResource(resource);
-            API.sendChatMessageToPlayer(sender, "~g~Started resource \"" + resource + "\"");
+            API.sendChatMessageToPlayer(sender, "~g~Started resource "" + resource + """);
         }
     }
 
@@ -87,19 +85,18 @@ public class AdminScript : Script
     {
         if (!API.doesResourceExist(resource))
         {
-            API.sendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
+            API.sendChatMessageToPlayer(sender, "~r~No such resource found: "" + resource + """);
         }
         else if (!API.isResourceRunning(resource))
         {
-            API.sendChatMessageToPlayer(sender, "~r~Resource \"" + resource + "\" is not running!");
+            API.sendChatMessageToPlayer(sender, "~r~Resource "" + resource + "" is not running!");
         }
         else
         {
             API.stopResource(resource);
-            API.sendChatMessageToPlayer(sender, "~g~Stopped resource \"" + resource + "\"");
+            API.sendChatMessageToPlayer(sender, "~g~Stopped resource "" + resource + """);
         }
     }
-
 
     [Command(ACLRequired = true)]
     public void Restart(Client sender, string resource)
@@ -108,12 +105,11 @@ public class AdminScript : Script
         {
             API.stopResource(resource);
             API.startResource(resource);
-
-            API.sendChatMessageToPlayer(sender, "~g~Restarted resource \"" + resource + "\"");
+            API.sendChatMessageToPlayer(sender, "~g~Restarted resource "" + resource + """);
         }
         else
         {
-            API.sendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
+            API.sendChatMessageToPlayer(sender, "~r~No such resource found: "" + resource + """);
         }
     }
 
@@ -130,39 +126,22 @@ public class AdminScript : Script
     }
 
     #endregion
-    
 
-	private void onResStart()
-	{
-		
-	}
+    public void onPlayerDisconnected(Client player, string reason)
+    {
+        API.logoutPlayer(player);
+    }
 
-	public void onPlayerDisconnected(Client player, string reason)
-	{
-		API.logoutPlayer(player);
-	}
-
-	public void onUpdate()
-	{
-		
-	}
-
-	public void onDeath(Client player)
-	{
-		
-	}	
-
-	public void OnPlayerConnected(Client player)
-    {    	
+    public void OnPlayerConnected(Client player)
+    {
         var log = API.loginPlayer(player, "");
         if (log == 1)
         {
-        	API.sendChatMessageToPlayer(player, "Logged in as ~b~" + API.getPlayerAclGroup(player) + "~w~.");
+            API.sendChatMessageToPlayer(player, "Logged in as ~b~" + API.getPlayerAclGroup(player) + "~w~.");
         }
         else if (log == 2)
         {
-			API.sendChatMessageToPlayer(player, "Please log in with ~b~/login [password]")        	;
+            API.sendChatMessageToPlayer(player, "Please log in with ~b~/login [password]")            ;
         }
     }
-
 }
