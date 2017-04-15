@@ -81,7 +81,7 @@ namespace RPGResource.Citizen
                 return;
             }
 
-            if (!(bool) API.call("PoliceStation", "IsInPoliceStation", (NetHandle)sender.handle))
+            if (!(bool)API.call("PoliceStation", "IsInPoliceStation", (NetHandle)sender.handle))
             {
                 API.sendChatMessageToPlayer(sender, "~r~ERROR: You're not in a police station!");
                 return;
@@ -94,7 +94,7 @@ namespace RPGResource.Citizen
                 return;
             }
 
-            
+
             List<int> crimes = API.getEntityData(sender, "Crimes");
             int totalPrice = 0;
 
@@ -125,5 +125,14 @@ namespace RPGResource.Citizen
             }
         }
 
+
+
+        [Command("taxi")]
+        public void calltaxi(Client sender)
+        {
+            API.call("Taxi", "useTaxis", sender);
+            API.sendChatMessageToPlayer(sender, "~b~Calling a taxi for you");
+        }
     }
 }
+
