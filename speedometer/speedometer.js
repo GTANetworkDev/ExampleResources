@@ -8,6 +8,7 @@ API.onResourceStart.connect(function() {
 	API.setCefBrowserHeadless(mainBrowser, true);
 	API.waitUntilCefBrowserInit(mainBrowser);
 	API.loadPageCefBrowser(mainBrowser, "main.html");
+	API.setCefDrawState(true);
 });
 
 API.onResourceStop.connect(function() {
