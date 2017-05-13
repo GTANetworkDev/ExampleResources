@@ -13,6 +13,7 @@ API.onChatCommand.connect(function(msg) {
 			API.waitUntilCefBrowserInit(mainBrowser);
 			API.setCefBrowserPosition(mainBrowser, res.Width - 505, 0);
 			API.sendNotification("Browser created!");
+			API.setCefDrawState(true);
 		}
 
 		API.loadPageCefBrowser(mainBrowser, page);
@@ -20,6 +21,7 @@ API.onChatCommand.connect(function(msg) {
 
 	if (msg == "/gotohell") {
 		if (mainBrowser != null) {
+			API.setCefDrawState(false);
 			API.destroyCefBrowser(mainBrowser);
 			mainBrowser = null;
 		}
@@ -36,6 +38,7 @@ API.onChatCommand.connect(function(msg) {
 
 API.onResourceStop.connect(function(e, ev) {
 	if (mainBrowser != null) {
+		API.setCefDrawState(false);
 		API.destroyCefBrowser(mainBrowser);
 	}
 });
