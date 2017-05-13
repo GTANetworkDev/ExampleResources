@@ -8,10 +8,12 @@ API.onResourceStart.connect(function() {
 	API.setCefBrowserHeadless(mainBrowser, true);
 	API.waitUntilCefBrowserInit(mainBrowser);
 	API.loadPageCefBrowser(mainBrowser, "main.html");
+	API.setCefDrawState(true);
 });
 
 API.onResourceStop.connect(function() {
 	if (mainBrowser != null) {
+		API.setCefDrawState(false);
 		API.destroyCefBrowser(mainBrowser);
 	}
 });
@@ -20,7 +22,7 @@ API.onUpdate.connect(function() {
 	var player = API.getLocalPlayer();
 	var inVeh = API.isPlayerInAnyVehicle(player);
 
-	if (mainBrowser != null)
+	if (mainBrowser != null && API.isCefDrawEnabled())
 	{
 		if (inVeh) {
 			var car = API.getPlayerVehicle(player);
