@@ -137,7 +137,7 @@ API.onUpdate.connect(function(sender, e) {
 
 	    	if (API.getGlobalTime() - lastSphereLeave > 10000) {
 	    		API.explodeVehicle(API.getPlayerVehicle(player));
-	    		API.setPlayerHealth(player, -1);
+	    		API.setPlayerHealth(-1);
 	    		API.deleteEntity(marker);
 	    		marker = null;
 	    		roundEnd = true;
