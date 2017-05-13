@@ -8,6 +8,7 @@ API.onResourceStart.connect(function() {
 	API.waitUntilCefBrowserInit(mainBrowser);
 	API.setCefBrowserPosition(mainBrowser, 0, 0);
 	API.loadPageCefBrowser(mainBrowser, "chat.html");
+	API.setCefDrawState(true);
 
 	mainChat = API.registerChatOverride();
 
@@ -22,6 +23,7 @@ API.onResourceStart.connect(function() {
 
 API.onResourceStop.connect(function() {
 	if (mainBrowser != null) {
+		API.setCefDrawState(false);
 		var localCopy = mainBrowser;
 		mainBrowser = null;
 		API.destroyCefBrowser(localCopy);
