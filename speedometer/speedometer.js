@@ -13,6 +13,7 @@ API.onResourceStart.connect(function() {
 
 API.onResourceStop.connect(function() {
 	if (mainBrowser != null) {
+		API.setCefDrawState(false);
 		API.destroyCefBrowser(mainBrowser);
 	}
 });
