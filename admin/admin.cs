@@ -64,16 +64,16 @@ public class AdminScript : Script
     {
         if (!API.doesResourceExist(resource))
         {
-            API.sendChatMessageToPlayer(sender, "~r~No such resource found: " + resource + "");
+            API.sendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
         }
         else if (API.isResourceRunning(resource))
         {
-            API.sendChatMessageToPlayer(sender, "~r~Resource " + resource + " is already running!");
+            API.sendChatMessageToPlayer(sender, "~r~Resource \"" + resource + "\" is already running!");
         }
         else
         {
             API.startResource(resource);
-            API.sendChatMessageToPlayer(sender, "~g~Started resource " + resource + "");
+            API.sendChatMessageToPlayer(sender, "~g~Started resource \"" + resource + "\"");
         }
     }
 
@@ -82,16 +82,16 @@ public class AdminScript : Script
     {
         if (!API.doesResourceExist(resource))
         {
-            API.sendChatMessageToPlayer(sender, "~r~No such resource found: " + resource + "");
+            API.sendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
         }
         else if (!API.isResourceRunning(resource))
         {
-            API.sendChatMessageToPlayer(sender, "~r~Resource " + resource + " is not running!");
+            API.sendChatMessageToPlayer(sender, "~r~Resource \"" + resource + "\" is not running!");
         }
         else
         {
             API.stopResource(resource);
-            API.sendChatMessageToPlayer(sender, "~g~Stopped resource " + resource);
+            API.sendChatMessageToPlayer(sender, "~g~Stopped resource \"" + resource + "\"");
         }
     }
 
@@ -102,11 +102,11 @@ public class AdminScript : Script
         {
             API.stopResource(resource);
             API.startResource(resource);
-            API.sendChatMessageToPlayer(sender, "~g~Restarted resource " + resource);
+            API.sendChatMessageToPlayer(sender, "~g~Restarted resource \"" + resource + "\"");
         }
         else
         {
-            API.sendChatMessageToPlayer(sender, "~r~No such resource found: " + resource);
+            API.sendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
         }
     }
 
