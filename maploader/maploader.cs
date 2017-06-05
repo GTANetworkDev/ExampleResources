@@ -31,8 +31,8 @@ using System.Threading;
     public void OnResourceStart()
     {
     	if (!Directory.Exists("maps")) {
-+		Directory.CreateDirectory("maps");
-+	}
+	    Directory.CreateDirectory("maps");
+	}
         var files = Directory.GetFiles("maps", "*.xml");
         int mapsLoaded = 0;
         API.consoleOutput("Loading maps...");
