@@ -1,0 +1,70 @@
+body {
+    overflow: hidden;
+}
+
+.timerbar {
+    position: relative;
+    right: 10px;
+    bottom: 40px;
+}
+
+.timerbar img {
+    width: 350px;
+    height: 37px;
+    opacity: 0.7;
+}
+
+.timerbar .timerbar_label {
+    font-family: sans-serif;
+    position: absolute;
+    color: white;
+    right: 250px;
+    bottom: -10px;
+    font-size: 100%;
+    text-align: right;
+    width: 100%;
+}
+
+.timerbar .timerbar_text {
+    font-family: sans-serif;
+    position: absolute;
+    color: white;
+    right: 15px;
+    bottom: -28px;
+    font-size: 200%;
+    text-align: right;
+}
+
+.timerbar_text_card {
+    z-index: 1;
+    position: absolute !important;
+    font-size: 0.39em !important;
+    color: white;
+    bottom: 3px;
+    font-size: 200%;
+}
+
+.timber_card_right {
+    right: 10px;
+}
+
+.timber_card_left {
+    right: 40px;
+}
+
+.myHand {
+    position: absolute;
+    left: 30px;
+    bottom: -150px;
+}
+
+.mainTable {
+    width: 900px;
+    margin: 0 auto;
+}
+
+.table-wrapper {
+    position: fixed;
+    bottom: -100px;
+    width: 100%;
+}

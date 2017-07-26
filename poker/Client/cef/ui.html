@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link type="text/css" rel="stylesheet" href="ui.css"/>
+    <link type="text/css" rel="stylesheet" href="cards.css" />
+    
+    <script src="controller.js"></script>
+</head>
+<body>
+    <div class="playingCards faceImages inText">
+        <ul id="timerbarsList" style="position: absolute; right: 10px; bottom: 10px; list-style: none;">
+            <li>
+                <div class="timerbar">
+                    <img src="images/all_black_bg.png" />
+                    <p class="timerbar_label">Max</p>
+                    <p class="card rank-k diams timerbar_text_card timber_card_left">
+                        <span class="rank">K</span>
+                        <span class="suit">&diams;</span>
+                    </p>
+                    <p class="card rank-5 diams timerbar_text_card timber_card_right">
+                        <span class="rank">5</span>
+                        <span class="suit">&diams;</span>
+                    </p>
+                </div>
+            </li>
+            <li>
+                <div class="timerbar">
+                    <img src="images/all_black_bg.png"/>
+                    <p class="timerbar_label">STRONG BAD</p>
+                    <p class="timerbar_text">5200$</p>
+                </div>
+            </li>
+            <li>
+                <div class="timerbar">
+                    <img src="images/all_black_bg.png"/>
+                    <p class="timerbar_label">POT</p>
+                    <p class="timerbar_text">2400$</p>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <div class="playingCards rotateHand myHand">
+        <ul class="hand">
+            <li>
+                <div id="firstHandCard" class="card rank-k diams">
+                    <span class="rank">K</span>
+                    <span class="suit">&diams;</span>
+                </div>
+            </li>
+            <li>
+                <div id="secondHandCard" class="card rank-5 diams">
+                    <span class="rank">5</span>
+                    <span class="suit">&diams;</span>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <div class="table-wrapper">
+        <div class="playingCards rotateHand mainTable">
+            <ul id="mainTableList" class="table">
+                <li>
+                    <div class="card rank-5 diams">
+                        <span class="rank">5</span>
+                        <span class="suit">&diams;</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="card rank-5 diams">
+                        <span class="rank">5</span>
+                        <span class="suit">&diams;</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="card rank-5 diams">
+                        <span class="rank">5</span>
+                        <span class="suit">&diams;</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="card rank-5 diams">
+                        <span class="rank">5</span>
+                        <span class="suit">&diams;</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="card rank-5 diams">
+                        <span class="rank">5</span>
+                        <span class="suit">&diams;</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

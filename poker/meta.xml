@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<meta>
+  <info name="Poker" author="Guadmaz" version="1.0" />
+  
+  <script src="Client/InstructionalButtons.js" type="client" lang="javascript" />
+  <script src="Client/Main.js" type="client" lang="javascript" />
+  
+  <script src="Server/GameState.cs" type="server" lang="csharp" />
+  <script src="Server/PokerLobby.cs" type="server" lang="csharp" />
+  <script src="Server/Card.cs" type="server" lang="csharp" />
+  <script src="Server/Deck.cs" type="server" lang="csharp" />
+  <script src="Server/HandDescriptor.cs" type="server" lang="csharp" />
+  <script src="Server/Player.cs" type="server" lang="csharp" />
+  <script src="Server/PokerEngine.cs" type="server" lang="csharp" />
+  <script src="Server/Controller.cs" type="server" lang="csharp" />
+
+  <file src="Client/cef/controller.js"/>
+  <file src="Client/cef/ui.html"/>
+  <file src="Client/cef/ui.css"/>
+  <file src="Client/cef/images/all_black_bg.png"/>
+  <file src="Client/cef/images/all_grey_bg.png"/>
+  <file src="Client/cef/cards.css"/>
+  
+  <export class="Controller" event="OnPlayerMoneyChange" />
+  <export class="Controller" event="OnPlayerWinRound" />
+  <export class="Controller" event="OnPlayerLoseRound" />
+  <export class="Controller" event="OnLobbyRoundEnd" />
+  <export class="Controller" event="OnLobbyRoundStart" />
+  
+  <export class="Controller" function="CreateLobby" />
+  <export class="Controller" function="DestroyLobby" />
+  <export class="Controller" function="DoesLobbyExist" />
+  <export class="Controller" function="AddPlayerToLobby" />
+  <export class="Controller" function="RemovePlayerFromLobby" />
+  <export class="Controller" function="StartLobby" />
+
+  <settings>
+    <setting name="enable_commands" value="false" description="Enable default commands like /createlobby, /joinlobby, etc" />
+  </settings>
+</meta>
