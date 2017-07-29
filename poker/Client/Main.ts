@@ -129,12 +129,15 @@ function createMenu() {
         case 0:
             // Raise
             API.triggerServerEvent("TURN_RESPONSE", lobbyId, 0, parseInt(selectedItem.IndexToItem(selectedItem.Index).toString()));
+            break;
         case 1:
             // Call/check
             API.triggerServerEvent("TURN_RESPONSE", lobbyId, 1);
+            break;
         case 2:
             // Fold
             API.triggerServerEvent("TURN_RESPONSE", lobbyId, 2);
+            break;
         }
 
         turnMenu.Visible = false;
