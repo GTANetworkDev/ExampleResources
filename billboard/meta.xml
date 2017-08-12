@@ -1,0 +1,26 @@
+<meta>
+	<info name="Billboard" author="Guadmaz" />
+
+	<script type="client" lang="javascript" src="manager.js" />
+	<script type="server" lang="csharp" src="Billboard.cs" />
+
+	<export class="BillboardManager" function="setBillboardRange" />
+	<export class="BillboardManager" function="createSimpleBillboard" />
+	<export class="BillboardManager" function="createYachtNameBillboard" />
+	<export class="BillboardManager" function="createLargeYachtNameBillboard" />
+	<export class="BillboardManager" function="createOrganizationName" />
+	<export class="BillboardManager" function="createMugshotBoard" />
+	<export class="BillboardManager" function="createScrollingText" />
+	<export class="BillboardManager" function="createMissionBillboard" />
+
+	<export class="BillboardManager" function="doesBillboardExist" />
+	<export class="BillboardManager" function="getBillboard" />
+	<export class="BillboardManager" function="setBillboardParams" />
+	<export class="BillboardManager" function="setBillboardArg" />
+	<export class="BillboardManager" function="refreshBillboard" />
+	<export class="BillboardManager" function="deleteBillboard" />
+
+	<settings>
+		<setting name="range" value="40" />
+	</settings>
+</meta>

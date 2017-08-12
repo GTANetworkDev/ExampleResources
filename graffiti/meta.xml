@@ -1,0 +1,8 @@
+<meta>
+	<info name="Graffiti" author="Guadmaz" />
+
+	<script type="client" lang="javascript" src="graffiti.js" />
+	<script type="server" lang="csharp" src="graffiti.cs" />
+
+	<include resource="billboard" />
+</meta>
