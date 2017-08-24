@@ -1,0 +1,19 @@
+<meta>
+    <info name="Trunk" author="Guadmaz" async="true" />
+
+    <script type="client" lang="javascript" src="collector.js" />
+    <script type="server" lang="csharp" src="datacollector.cs" />
+
+    <script type="client" lang="javascript" src="query.js" />
+    <script type="server" lang="csharp" src="placer.cs" />
+
+    <assembly ref="System.Xml.dll" />
+
+    <config src="trunks.xml" />
+
+    <export class="TrunkPlacer" function="canPlaceStuff" />
+    <export class="TrunkPlacer" function="repackEntitiesInTrunk" />
+    <export class="TrunkPlacer" function="refreshTrunkEntities" />
+    <export class="TrunkPlacer" function="placeEntityInTrunkCentered" />
+
+</meta>
