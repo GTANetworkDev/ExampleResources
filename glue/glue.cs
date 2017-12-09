@@ -1,46 +1,43 @@
-using System;
+﻿using GTANetworkAPI;
 using System.Linq;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using GTANetworkServer;
-using GTANetworkShared;
-using System.Threading;
 
-public class GlueScript : Script
+namespace WipRagempResource.glue
 {
-	[Command]
-	public void Glue(Client sender)
-	{
-		if(API.isEntityAttachedToAnything(sender.handle))
-		{
-			API.detachEntity(sender.handle, false);
-			API.sendChatMessageToPlayer(sender, "~g~Unglued!");
-			return;
-		}
+    public class GlueScript : Script
+    {
+        [Command]
+        public void Glue(Client sender)
+        {
+            if (API.IsEntityAttachedToAnything(sender.Handle))
+            {
+                API.DetachEntity(sender.Handle, false);
+                API.SendChatMessageToPlayer(sender, "~g~Unglued!");
+                return;
+            }
 
-		var vehicles = API.getAllVehicles();
-		var playerPos = API.getEntityPosition(sender.handle);
+            var vehicles = API.GetAllVehicles();
+            var playerPos = API.GetEntityPosition(sender.Handle);
 
-		if (vehicles.Count == 0)
-		{
-			API.sendChatMessageToPlayer(sender, "~r~ERROR: ~w~No nearby vehicles!");
-			return;
-		}
+            if (vehicles.Count == 0)
+            {
+                API.SendChatMessageToPlayer(sender, "~r~ERROR: ~w~No nearby vehicles!");
+                return;
+            }
 
-		var vOrd = vehicles.OrderBy(v => API.getEntityPosition(v).DistanceToSquared(playerPos));
-		var targetVehicle = vOrd.First();
+            var vOrd = vehicles.OrderBy(v => API.GetEntityPosition(v).DistanceToSquared(playerPos));
+            var targetVehicle = vOrd.First();
 
-		if (API.fetchNativeFromPlayer<bool>(sender, 0x17FFC1B2BA35A494, sender.handle, targetVehicle))
-		{
-			var positionOffset = API.fetchNativeFromPlayer<Vector3>(sender, 0x2274BC1C4885E333, targetVehicle, playerPos.X, playerPos.Y, playerPos.Z);
-			var rotOffset = API.getEntityRotation(targetVehicle) - API.getEntityRotation(sender.handle);
+            if (API.FetchNativeFromPlayer<bool>(sender, 0x17FFC1B2BA35A494, sender.Handle, targetVehicle))
+            {
+                var positionOffset = API.FetchNativeFromPlayer<Vector3>(sender, 0x2274BC1C4885E333, targetVehicle, playerPos.X, playerPos.Y, playerPos.Z);
+                var rotOffset = API.GetEntityRotation(targetVehicle) - API.GetEntityRotation(sender.Handle);
 
-			rotOffset = new Vector3(rotOffset.X, rotOffset.Y, rotOffset.Z * -1f);
+                rotOffset = new Vector3(rotOffset.X, rotOffset.Y, rotOffset.Z * -1f);
 
-			API.attachEntityToEntity(sender.handle, targetVehicle, null, positionOffset, rotOffset);
+                API.AttachEntityToEntity(sender.Handle, targetVehicle, null, positionOffset, rotOffset);
 
-			API.sendChatMessageToPlayer(sender, "~g~Glued!");
-		}
-	}
+                API.SendChatMessageToPlayer(sender, "~g~Glued!");
+            }
+        }
+    }
 }

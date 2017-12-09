@@ -339,7 +339,6 @@ public class RaceGamemode : Script
         }
     }
 
-
     public void onDisconnect(Client player, string reason)
     {
         Opponent curOp = Opponents.FirstOrDefault(op => op.Client == player);

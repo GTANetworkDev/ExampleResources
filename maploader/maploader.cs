@@ -1,22 +1,16 @@
-using System;
-using System.Linq;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
-using System.Text;
-using GTANetworkServer;
-using GTANetworkShared;
-using System.Threading;
+using GTANetworkAPI;
 
 
-
- public class MapLoader : Script
- {
+public class MapLoader : Script
+{
     public MapLoader()
-    {        
-        API.onResourceStart += OnResourceStart;
-        API.onResourceStop += OnResourceStop;
-	}
+    {
+        Event.OnResourceStart += OnResourceStart;
+        Event.OnResourceStop += OnResourceStop;
+    }
 
     public List<NetHandle> CreatedEntities = new List<NetHandle>();
 
@@ -24,18 +18,18 @@ using System.Threading;
     {
         foreach (var handle in CreatedEntities)
         {
-            API.deleteEntity(handle);
+            API.DeleteEntity(handle);
         }
     }
 
     public void OnResourceStart()
     {
-    	if (!Directory.Exists("maps")) {
-+		Directory.CreateDirectory("maps");
-+	}
+        if (!Directory.Exists("maps"))
+            Directory.CreateDirectory("maps");
+
         var files = Directory.GetFiles("maps", "*.xml");
         int mapsLoaded = 0;
-        API.consoleOutput("Loading maps...");
+        API.ConsoleOutput("Loading maps...");
         foreach (var path in files)
         {
             mapsLoaded++;
@@ -43,30 +37,30 @@ using System.Threading;
             {
                 var ser = new XmlSerializer(typeof(Map));
                 var myMap = (Map)ser.Deserialize(stream);
-                
-                
+
+
                 foreach (var prop in myMap.Objects)
                 {
                     if (prop.Type == ObjectTypes.Prop)
                     {
                         if (prop.Quaternion != null)
                         {
-                            CreatedEntities.Add(API.createObject(prop.Hash, prop.Position, prop.Quaternion));
+                            CreatedEntities.Add(API.CreateObject(prop.Hash, prop.Position, prop.Quaternion));
                         }
                         else
                         {
-                            CreatedEntities.Add(API.createObject(prop.Hash, prop.Position, prop.Rotation));   
+                            CreatedEntities.Add(API.CreateObject(prop.Hash, prop.Position, prop.Rotation));
                         }
                     }
                     else if (prop.Type == ObjectTypes.Vehicle)
                     {
-                        CreatedEntities.Add(API.createVehicle((VehicleHash)prop.Hash, prop.Position, prop.Rotation, 0, 0));
+                        CreatedEntities.Add(API.CreateVehicle(prop.Hash, prop.Position, prop.Rotation.Z, 0, 0));
                     }
                 }
             }
         }
-        
-        API.consoleOutput("Loaded " + mapsLoaded + " maps!");
+
+        API.ConsoleOutput("Loaded " + mapsLoaded + " maps!");
     }
 
 }
@@ -85,7 +79,7 @@ public class MapObject
     public string Action;
     public string Relationship;
     public string Weapon;
-    
+
     // Vehicle stuff
     public bool SirensActive;
 

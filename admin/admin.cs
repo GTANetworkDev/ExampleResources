@@ -1,144 +1,145 @@
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using GTANetworkServer;
-using GTANetworkShared;
-using System.Threading;
+﻿using System;
+using GTANetworkAPI;
 
-public class AdminScript : Script
+namespace WipRagempResource.admin
 {
-    public AdminScript()
+    public class AdminScript : Script
     {
-        API.onPlayerConnected += OnPlayerConnected;
-        API.onPlayerDisconnected += onPlayerDisconnected;
-    }
-
-    #region Commands
-
-    [Command(SensitiveInfo = true, ACLRequired = true)]
-    public void Login(Client sender, string password)
-    {
-        var logResult = API.loginPlayer(sender, password);
-        switch (logResult)
+        public AdminScript()
         {
-            case 0:
-                API.sendChatMessageToPlayer(sender, "~r~ERROR:~w~ No account found with your name.");
-                break;
-            case 1:
-                API.sendChatMessageToPlayer(sender, "~g~Login successful!~w~ Logged in as ~b~" + API.getPlayerAclGroup(sender) + "~w~.");
-                break;
-            case 2:
-                API.sendChatMessageToPlayer(sender, "~r~ERROR:~w~ Wrong password!");
-                break;
-            case 4:
-                API.sendChatMessageToPlayer(sender, "~r~ERROR:~w~ You're already logged in!");
-                break;
-            case 5:
-                API.sendChatMessageToPlayer(sender, "~r~ERROR:~w~ ACL has been disabled on this server.");
-                break;
+            Event.OnPlayerConnected += Event_OnPlayerConnected;
+            Event.OnPlayerDisconnected += EventOnOnPlayerDisconnected;
         }
-    }
 
-    [Command(ACLRequired = true)]
-    public void SetTime(Client sender, int hours, int minutes)
-    {
-        API.setTime(hours, minutes);
-    }
-
-    [Command(ACLRequired = true)]
-    public void SetWeather(Client sender, int newWeather)
-    {
-        API.setWeather(newWeather);
-    }
-
-    [Command(ACLRequired = true)]
-    public void Logout(Client sender)
-    {
-        API.logoutPlayer(sender);
-    }
-
-    [Command(ACLRequired = true)]
-    public void Start(Client sender, string resource)
-    {
-        if (!API.doesResourceExist(resource))
+        #region Events
+        
+        private void EventOnOnPlayerDisconnected(Client player, byte type, string reason)
         {
-            API.sendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
+            API.LogoutPlayer(player);
         }
-        else if (API.isResourceRunning(resource))
-        {
-            API.sendChatMessageToPlayer(sender, "~r~Resource \"" + resource + "\" is already running!");
-        }
-        else
-        {
-            API.startResource(resource);
-            API.sendChatMessageToPlayer(sender, "~g~Started resource \"" + resource + "\"");
-        }
-    }
 
-    [Command(ACLRequired = true)]
-    public void Stop(Client sender, string resource)
-    {
-        if (!API.doesResourceExist(resource))
+        private void Event_OnPlayerConnected(Client player, CancelEventArgs cancel)
         {
-            API.sendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
+            var log = API.LoginPlayer(player, "");
+            if (log == 1)
+            {
+                API.SendChatMessageToPlayer(player, "Logged in as ~b~" + API.GetPlayerAclGroup(player) + "~w~.");
+            }
+            else if (log == 2)
+            {
+                API.SendChatMessageToPlayer(player, "Please log in with ~b~/login [password]");
+            }
         }
-        else if (!API.isResourceRunning(resource))
-        {
-            API.sendChatMessageToPlayer(sender, "~r~Resource \"" + resource + "\" is not running!");
-        }
-        else
-        {
-            API.stopResource(resource);
-            API.sendChatMessageToPlayer(sender, "~g~Stopped resource \"" + resource + "\"");
-        }
-    }
 
-    [Command(ACLRequired = true)]
-    public void Restart(Client sender, string resource)
-    {
-        if (API.doesResourceExist(resource))
+        #endregion
+
+        #region Commands
+
+        [Command(SensitiveInfo = true, ACLRequired = true)]
+        public void Login(Client sender, string password)
         {
-            API.stopResource(resource);
-            API.startResource(resource);
-            API.sendChatMessageToPlayer(sender, "~g~Restarted resource \"" + resource + "\"");
+            var logResult = API.LoginPlayer(sender, password);
+
+            switch (logResult)
+            {
+                case 0:
+                    API.SendChatMessageToPlayer(sender, "~r~ERROR:~w~ No account found with your name.");
+                    break;
+                case 1:
+                    API.SendChatMessageToPlayer(sender, "~g~Login successful!~w~ Logged in as ~b~" + API.GetPlayerAclGroup(sender) + "~w~.");
+                    break;
+                case 2:
+                    API.SendChatMessageToPlayer(sender, "~r~ERROR:~w~ Wrong password!");
+                    break;
+                case 4:
+                    API.SendChatMessageToPlayer(sender, "~r~ERROR:~w~ You're already logged in!");
+                    break;
+                case 5:
+                    API.SendChatMessageToPlayer(sender, "~r~ERROR:~w~ ACL has been disabled on this server.");
+                    break;
+            }
         }
-        else
+
+        [Command(ACLRequired = true)]
+        public void SetTime(Client sender, int hours, int minutes)
         {
-            API.sendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
+            API.SetTime(hours, minutes, 0);
         }
-    }
 
-    [Command(GreedyArg = true, ACLRequired = true)]
-    public void Kick(Client sender, Client target, string reason)
-    {
-        API.kickPlayer(target, reason);
-    }
-
-    [Command(ACLRequired = true)]
-    public void Kill(Client sender, Client target)
-    {
-        API.setPlayerHealth(target, -1);
-    }
-
-    #endregion
-
-    public void onPlayerDisconnected(Client player, string reason)
-    {
-        API.logoutPlayer(player);
-    }
-
-    public void OnPlayerConnected(Client player)
-    {
-        var log = API.loginPlayer(player, "");
-        if (log == 1)
+        [Command(ACLRequired = true)]
+        public void SetWeather(Client sender, int newWeather)
         {
-            API.sendChatMessageToPlayer(player, "Logged in as ~b~" + API.getPlayerAclGroup(player) + "~w~.");
+            API.SetWeather(newWeather);
         }
-        else if (log == 2)
+
+        [Command(ACLRequired = true)]
+        public void Logout(Client sender)
         {
-            API.sendChatMessageToPlayer(player, "Please log in with ~b~/login [password]");
+            API.LogoutPlayer(sender);
         }
+
+        [Command(ACLRequired = true)]
+        public void Start(Client sender, string resource)
+        {
+            if (!API.DoesResourceExist(resource))
+            {
+                API.SendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
+            }
+            else if (API.IsResourceRunning(resource))
+            {
+                API.SendChatMessageToPlayer(sender, "~r~Resource \"" + resource + "\" is already running!");
+            }
+            else
+            {
+                API.StartResource(resource);
+                API.SendChatMessageToPlayer(sender, "~g~Started resource \"" + resource + "\"");
+            }
+        }
+
+        [Command(ACLRequired = true)]
+        public void Stop(Client sender, string resource)
+        {
+            if (!API.DoesResourceExist(resource))
+            {
+                API.SendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
+            }
+            else if (!API.IsResourceRunning(resource))
+            {
+                API.SendChatMessageToPlayer(sender, "~r~Resource \"" + resource + "\" is not running!");
+            }
+            else
+            {
+                API.StopResource(resource);
+                API.SendChatMessageToPlayer(sender, "~g~Stopped resource \"" + resource + "\"");
+            }
+        }
+
+        [Command(ACLRequired = true)]
+        public void Restart(Client sender, string resource)
+        {
+            if (API.DoesResourceExist(resource))
+            {
+                API.StopResource(resource);
+                API.StartResource(resource);
+                API.SendChatMessageToPlayer(sender, "~g~Restarted resource \"" + resource + "\"");
+            }
+            else
+            {
+                API.SendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
+            }
+        }
+
+        [Command(GreedyArg = true, ACLRequired = true)]
+        public void Kick(Client sender, Client target, string reason)
+        {
+            API.KickPlayer(target, reason);
+        }
+
+        [Command(ACLRequired = true)]
+        public void Kill(Client sender, Client target)
+        {
+            API.SetPlayerHealth(target, -1);
+        }
+        #endregion
     }
 }

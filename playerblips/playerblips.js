@@ -1,13 +1,5 @@
-var ourBlip = null;
+﻿var setPlayerBlip = (blip) => {
+    blip.setAlpha(0);
+};
 
-API.onServerEventTrigger.connect(function(eventName, args) {
-	if (eventName == "SET_PLAYER_BLIP") {
-		ourBlip = args[0];
-	}
-});
-
-API.onUpdate.connect(function() {
-	if (ourBlip != null) {
-		API.setBlipTransparency(ourBlip, 0);
-	}
-});
+mp.events.add('SET_PLAYER_BLIP', setPlayerBlip);

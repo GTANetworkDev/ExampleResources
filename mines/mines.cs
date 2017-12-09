@@ -1,46 +1,47 @@
-using System;
-using GTANetworkServer;
-using GTANetworkShared;
-
-public class MinesTest : Script
+﻿namespace WipRagempResource.mines
 {
-    public MinesTest()
-    {
-        API.onResourceStart += myResourceStart;
-    }
+    using GTANetworkAPI;
 
-    public void myResourceStart()
+    public class MinesTest : Script
     {
-        API.consoleOutput("Starting mines!");
-    }
-
-    [Command("mine")]
-    public void PlaceMine(Client sender, float MineRange = 10f)
-    {
-        var pos = API.getEntityPosition(sender);
-        var playerDimension = API.getEntityDimension(sender);
-
-        var prop = API.createObject(API.getHashKey("prop_bomb_01"), pos - new Vector3(0, 0, 1f), new Vector3(), playerDimension);     
-        var shape = API.createSphereColShape(pos, MineRange);
-        shape.dimension = playerDimension;
-        
-        bool mineArmed = false;
-        
-        shape.onEntityEnterColShape += (s, ent) =>
+        public MinesTest()
         {
-            if (!mineArmed) return;
-            API.createOwnedExplosion(sender, ExplosionType.HiOctane, pos, 1f, playerDimension);
-            API.deleteEntity(prop);
-            API.deleteColShape(shape);
-        };
+            Event.OnResourceStart += myResourceStart;
+        }
 
-        shape.onEntityExitColShape += (s, ent) =>
+        public void myResourceStart()
         {
-            if (ent == sender.handle && !mineArmed)
+            API.ConsoleOutput("Starting mines!");
+        }
+
+        [Command("mine")]
+        public void PlaceMine(Client sender, float MineRange = 10f)
+        {
+            var pos = API.GetEntityPosition(sender);
+            var playerDimension = API.GetEntityDimension(sender);
+
+            var prop = API.CreateObject(API.GetHashKey("prop_bomb_01"), pos - new Vector3(0, 0, 1f), new Vector3(), playerDimension);
+            var shape = API.CreateSphereColShape(pos, MineRange);
+            shape.Dimension = playerDimension;
+
+            bool mineArmed = false;
+
+            shape.OnEntityEnterColShape += (s, ent) =>
             {
-                mineArmed = true;
-                API.sendNotificationToPlayer(sender, "Mine has been ~r~armed~w~!", true);
-            }
-        };
+                if (!mineArmed) return;
+                API.CreateOwnedExplosion(sender, ExplosionType.HiOctane, pos, 1f, playerDimension);
+                API.DeleteEntity(prop);
+                API.DeleteColShape(shape);
+            };
+
+            shape.OnEntityExitColShape += (s, ent) =>
+            {
+                if (ent == sender.Handle && !mineArmed)
+                {
+                    mineArmed = true;
+                    API.SendNotificationToPlayer(sender, "Mine has been ~r~armed~w~!", true);
+                }
+            };
+        }
     }
 }
