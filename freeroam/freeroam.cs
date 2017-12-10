@@ -3,25 +3,22 @@ using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using GTANetworkServer;
-using GTANetworkShared;
-using System.Threading;
+using GTANetworkAPI;
 
 public class FreeroamScript : Script
 {
     public FreeroamScript()
     {
-        API.onResourceStart += OnResourceStartHandler;
-        API.onResourceStop += OnResourceStopHandler;
-        API.onPlayerFinishedDownload += OnPlayerFinishedDownloadHandler;
-        API.onPlayerDisconnected += OnPlayerDisconnectedHandler;
-        API.onClientEventTrigger += OnClientEvent;
+        Event.OnResourceStart += OnResourceStartHandler;
+        Event.OnResourceStop += OnResourceStopHandler;
+        Event.OnPlayerConnected += OnPlayerConnectedHandler;
+        Event.OnPlayerDisconnected += OnPlayerDisconnectedHandler;
     }
 
     private static Random Rnd = new Random();
 
     #region IPLs
-    private string[] YachtIPL = {
+    private readonly string[] YachtIPL = {
         "hei_yacht_heist",
         "hei_yacht_heist_enginrm",
         "hei_yacht_heist_Lounge",
@@ -32,7 +29,7 @@ public class FreeroamScript : Script
         "hei_yacht_heist_Bridge"
     };
 
-    private string[] CarrierIPL = {
+    private readonly string[] CarrierIPL = {
         "hei_carrier",
         "hei_Carrier_int1",
         "hei_Carrier_int2",
@@ -101,12 +98,12 @@ public class FreeroamScript : Script
     {
         public Players(string sc)
         {
-            socialClubName = sc;
+            SocialClubName = sc;
         }
 
         public bool Fresh { get; set; }
-        public string socialClubName { get; set; }
-        public int Skin { get; set; }
+        public string SocialClubName { get; set; }
+        public uint Skin { get; set; }
         public Vector3 LastPosition { get; set; }
         public Vehicle LastVehicle { get; set; }
         public List<NetHandle> VehicleHistory { get; set; }
@@ -114,7 +111,7 @@ public class FreeroamScript : Script
 
     public class Vehicle
     {
-        public int Model { get; set; }
+        public uint Model { get; set; }
         public int PrimaryColor { get; set; }
         public int SecondaryColor { get; set; }
     }
@@ -125,11 +122,11 @@ public class FreeroamScript : Script
 
         foreach (string element in YachtIPL)
         {
-            API.requestIpl(element);
+            API.RequestIpl(element);
         }
         foreach (string element in CarrierIPL)
         {
-            API.requestIpl(element);
+            API.RequestIpl(element);
         }
     }
 
@@ -137,178 +134,155 @@ public class FreeroamScript : Script
     {
         foreach (string element in YachtIPL)
         {
-            API.removeIpl(element);
+            API.RemoveIpl(element);
         }
         foreach (string element in CarrierIPL)
         {
-            API.removeIpl(element);
+            API.RemoveIpl(element);
         }
     }
 
     public Players Handle(Client player)
     {
-        if (PlayerList.FirstOrDefault(op => op.socialClubName == player.socialClubName) == null)
+        if (PlayerList.FirstOrDefault(op => op.SocialClubName == player.SocialClubName) == null)
         {
-            PlayerList.Add(new Players(player.socialClubName) { Fresh = true, VehicleHistory = new List<NetHandle>(), LastVehicle = new Vehicle() });
+            PlayerList.Add(new Players(player.SocialClubName) { Fresh = true, VehicleHistory = new List<NetHandle>(), LastVehicle = new Vehicle() });
         }
 
-        Players Player = PlayerList.First(op => op.socialClubName == player.socialClubName);
+        Players Player = PlayerList.First(op => op.SocialClubName == player.SocialClubName);
         return Player;
     }
 
-    private void OnPlayerFinishedDownloadHandler(Client player)
+    private void OnPlayerConnectedHandler(Client player, CancelEventArgs args)
     {
         if (Handle(player).Fresh)
         {
             var vals = Enum.GetValues(typeof(PedHash)).OfType<PedHash>();
             var randomSkin = vals.ElementAt(Rnd.Next(vals.Count()));
-            player.setSkin(randomSkin);
+            player.SetSkin(randomSkin);
 
-            player.position = SpawnPositions[Rnd.Next(SpawnPositions.Count)];
+            player.Position = SpawnPositions[Rnd.Next(SpawnPositions.Count)];
             return;
         }
 
-        player.position = Handle(player).LastPosition;
-        player.setSkin((PedHash)Handle(player).Skin);
+        player.Position = Handle(player).LastPosition;
+        player.SetSkin((PedHash)Handle(player).Skin);
 
         if (Handle(player).LastVehicle.Model == 0) return;
-        var veh = API.createVehicle((VehicleHash)Handle(player).LastVehicle.Model, player.position, player.rotation, 0, 0);
-        player.setIntoVehicle(veh, -1);
-        Handle(player).VehicleHistory.Add(veh.handle);
-        player.vehicle.primaryColor = Handle(player).LastVehicle.PrimaryColor;
-        player.vehicle.secondaryColor = Handle(player).LastVehicle.SecondaryColor;
+        var veh = API.CreateVehicle((VehicleHash)Handle(player).LastVehicle.Model, player.Position, player.Heading, 0, 0);
+        player.SetIntoVehicle(veh, -1);
+        Handle(player).VehicleHistory.Add(veh.Handle);
+        player.Vehicle.PrimaryColor = Handle(player).LastVehicle.PrimaryColor;
+        player.Vehicle.SecondaryColor = Handle(player).LastVehicle.SecondaryColor;
     }
 
-    private void OnPlayerDisconnectedHandler(Client player, string reason)
+    private void OnPlayerDisconnectedHandler(Client player, byte type, string reason)
     {
-        Handle(player).LastPosition = player.position;
-        Handle(player).Skin = player.model;
-        if (player.isInVehicle)
+        Handle(player).LastPosition = player.Position;
+        Handle(player).Skin = player.Model;
+        if (player.IsInVehicle)
         {
-            Handle(player).LastVehicle.Model = player.vehicle.model;
-            Handle(player).LastVehicle.PrimaryColor = player.vehicle.primaryColor;
-            Handle(player).LastVehicle.SecondaryColor = player.vehicle.secondaryColor;
+            Handle(player).LastVehicle.Model = player.Vehicle.Model;
+            Handle(player).LastVehicle.PrimaryColor = player.Vehicle.PrimaryColor;
+            Handle(player).LastVehicle.SecondaryColor = player.Vehicle.SecondaryColor;
         }
         else { Handle(player).LastVehicle.Model = 0; }
         foreach (var veh in Handle(player).VehicleHistory)
         {
-            if (veh == null) continue;
-            API.deleteEntity(veh);
+            API.DeleteEntity(veh);
         }
         Handle(player).VehicleHistory.Clear();
         Handle(player).Fresh = false;
     }
 
-
-    public void OnClientEvent(Client sender, string name, object[] args)
-    {
-        if (name == "CREATE_VEHICLE")
-        {
-            int model = (int)args[0];
-
-            if (!Enum.IsDefined(typeof(VehicleHash), model))
-                return;
-
-            var rot = API.getEntityRotation(sender.handle);
-            var veh = API.createVehicle((VehicleHash)model, sender.position, new Vector3(0, 0, rot.Z), 0, 0);
-
-            Handle(sender).VehicleHistory.Add(veh);
-            if (Handle(sender).VehicleHistory.Count > 2)
-            {
-                API.deleteEntity(Handle(sender).VehicleHistory[0]);
-                Handle(sender).VehicleHistory.RemoveAt(0);
-            }
-
-            API.setPlayerIntoVehicle(sender, veh, -1);
-        }
-    }
-
     [Command("me", GreedyArg = true)]
     public void MeCommand(Client sender, string text)
     {
-        API.sendChatMessageToAll("~#C2A2DA~", sender.name + " " + text);
+        API.SendChatMessageToAll("!{#C2A2DA}" + sender.Name + " " + text);
     }
 
     [Command("spec")]
     public void SpectatorCommand(Client sender, Client target)
     {
-        API.setPlayerToSpectatePlayer(sender, target);
+        API.SetPlayerToSpectatePlayer(sender, target);
     }
 
     [Command("unspec")]
     public void StopSpectatingCommand(Client sender)
     {
-        API.unspectatePlayer(sender);
+        API.UnspectatePlayer(sender);
     }
 
     [Command("loadipl")]
     public void LoadIplCommand(Client sender, string ipl)
     {
-        API.requestIpl(ipl);
-        API.consoleOutput("LOADED IPL " + ipl);
-        API.sendChatMessageToPlayer(sender, "Loaded IPL ~b~" + ipl + "~w~.");
+        API.RequestIpl(ipl);
+        API.ConsoleOutput("LOADED IPL " + ipl);
+        API.SendChatMessageToPlayer(sender, "Loaded IPL ~b~" + ipl + "~w~.");
     }
 
     [Command("removeipl")]
     public void RemoveIplCommand(Client sender, string ipl)
     {
-        API.removeIpl(ipl);
-        API.consoleOutput("REMOVED IPL " + ipl);
-        API.sendChatMessageToPlayer(sender, "Removed IPL ~b~" + ipl + "~w~.");
+        API.RemoveIpl(ipl);
+        API.ConsoleOutput("REMOVED IPL " + ipl);
+        API.SendChatMessageToPlayer(sender, "Removed IPL ~b~" + ipl + "~w~.");
     }
 
     [Command("blackout")]
     public void BlackoutCommand(Client sender, bool blackout)
     {
-        API.sendNativeToAllPlayers(0x1268615ACE24D504, blackout);
+        API.SendNativeToAllPlayers(0x1268615ACE24D504, blackout);
     }
 
     [Command("dimension")]
-    public void ChangeDimension(Client sender, int dimension)
+    public void ChangeDimension(Client sender, uint dimension)
     {
-        API.setEntityDimension(sender.handle, dimension);
+        if (dimension == 9999)
+            dimension = API.GlobalDimension;
+        API.SetEntityDimension(sender.Handle, dimension);
     }
 
     [Command("mod")]
     public void SetCarModificationCommand(Client sender, int modIndex, int modVar)
     {
-        if (!sender.vehicle.IsNull)
+        if (!sender.Vehicle.IsNull)
         {
-            API.setVehicleMod(sender.vehicle, modIndex, modVar);
-            API.sendChatMessageToPlayer(sender, "Mod applied successfully!");
+            API.SetVehicleMod(sender.Vehicle, modIndex, modVar);
+            API.SendChatMessageToPlayer(sender, "Mod applied successfully!");
         }
         else
         {
-            API.sendChatMessageToPlayer(sender, "~r~ERROR: ~w~You're not in a vehicle!");
+            API.SendChatMessageToPlayer(sender, "~r~ERROR: ~w~You're not in a vehicle!");
         }
     }
 
     [Command("clothes")]
     public void SetPedClothesCommand(Client sender, int slot, int drawable, int texture)
     {
-        API.setPlayerClothes(sender, slot, drawable, texture);
-        API.sendChatMessageToPlayer(sender, "Clothes applied successfully!");
+        API.SetPlayerClothes(sender, slot, drawable, texture);
+        API.SendChatMessageToPlayer(sender, "Clothes applied successfully!");
     }
 
     [Command("props")]
     public void SetPedAccessoriesCommand(Client sender, int slot, int drawable, int texture)
     {
-        API.setPlayerAccessory(sender, slot, drawable, texture);
-        API.sendChatMessageToPlayer(sender, "Props applied successfully!");
+        API.SetPlayerAccessory(sender, slot, drawable, texture);
+        API.SendChatMessageToPlayer(sender, "Props applied successfully!");
     }
 
     [Command("colors")]
     public void GameVehicleColorsCommand(Client sender, int primaryColor, int secondaryColor)
     {
-        if (!sender.vehicle.IsNull)
+        if (!sender.Vehicle.IsNull)
         {
-            API.setVehiclePrimaryColor(sender.vehicle, primaryColor);
-            API.setVehicleSecondaryColor(sender.vehicle, secondaryColor);
-            API.sendChatMessageToPlayer(sender, "Colors applied successfully!");
+            API.SetVehiclePrimaryColor(sender.Vehicle, primaryColor);
+            API.SetVehicleSecondaryColor(sender.Vehicle, secondaryColor);
+            API.SendChatMessageToPlayer(sender, "Colors applied successfully!");
         }
         else
         {
-            API.sendChatMessageToPlayer(sender, "~r~ERROR: ~w~You're not in a vehicle!");
+            API.SendChatMessageToPlayer(sender, "~r~ERROR: ~w~You're not in a vehicle!");
         }
     }
 
@@ -320,19 +294,19 @@ public class FreeroamScript : Script
     {
         if (cars.ContainsKey(sender))
         {
-            API.deleteEntity(cars[sender]);
+            API.DeleteEntity(cars[sender]);
             cars.Remove(sender);
         }
 
         if (labels.ContainsKey(sender))
         {
-            API.deleteEntity(labels[sender]);
+            API.DeleteEntity(labels[sender]);
             labels.Remove(sender);
         }
 
         if (shields.ContainsKey(sender))
         {
-            API.deleteEntity(shields[sender]);
+            API.DeleteEntity(shields[sender]);
             shields.Remove(sender);
         }
     }
@@ -342,13 +316,12 @@ public class FreeroamScript : Script
     {
         if (cars.ContainsKey(sender))
         {
-            API.deleteEntity(cars[sender]);
+            API.DeleteEntity(cars[sender]);
             cars.Remove(sender);
         }
 
-        var prop = API.createVehicle(veh, API.getEntityPosition(sender.handle), new Vector3(), 0, 0);
-        API.attachEntityToEntity(prop, sender.handle, null,
-                    new Vector3(), new Vector3());
+        var prop = API.CreateVehicle(veh, sender.Position, sender.Heading, 0, 0);
+        API.AttachEntityToEntity(prop, sender.Handle, null, new Vector3(), new Vector3());
 
         cars.Add(sender, prop);
     }
@@ -360,13 +333,13 @@ public class FreeroamScript : Script
     {
         if (labels.ContainsKey(sender))
         {
-            API.deleteEntity(labels[sender]);
+            API.DeleteEntity(labels[sender]);
             labels.Remove(sender);
         }
 
-        var prop = API.createTextLabel(message, API.getEntityPosition(sender.handle), 50f, 0.4f, true);
+        var prop = API.CreateTextLabel(message, API.GetEntityPosition(sender.Handle), 50f, 0.4f, 0, new Color(255));
 
-        API.attachEntityToEntity(prop, sender.handle, null,
+        API.AttachEntityToEntity(prop, sender.Handle, null,
                     new Vector3(0, 0, 1f), new Vector3());
 
         labels.Add(sender, prop);
@@ -375,9 +348,8 @@ public class FreeroamScript : Script
     [Command("attachmarker")]
     public void attachtest4(Client sender)
     {
-        var prop = API.createMarker(0, API.getEntityPosition(sender.handle), new Vector3(), new Vector3(), new Vector3(1f, 1f, 1f), 255, 255, 255, 255);
-        API.attachEntityToEntity(prop, sender.handle, null,
-                    new Vector3(), new Vector3());
+        var prop = API.CreateMarker(0, API.GetEntityPosition(sender.Handle), new Vector3(), new Vector3(), 1f, new Color(255, 255, 255));
+        API.AttachEntityToEntity(prop, sender.Handle, null, new Vector3(), new Vector3());
     }
 
     [Command("shield")]
@@ -385,12 +357,12 @@ public class FreeroamScript : Script
     {
         if (shields.ContainsKey(sender))
         {
-            API.deleteEntity(shields[sender]);
+            API.DeleteEntity(shields[sender]);
             shields.Remove(sender);
         }
 
-        var prop = API.createObject(API.getHashKey("prop_riot_shield"), API.getEntityPosition(sender.handle), new Vector3());
-        API.attachEntityToEntity(prop, sender.handle, "SKEL_L_Hand",
+        var prop = API.CreateObject(API.GetHashKey("prop_riot_shield"), API.GetEntityPosition(sender.Handle), new Vector3());
+        API.AttachEntityToEntity(prop, sender.Handle, "SKEL_L_Hand",
             new Vector3(0, 0, 0), new Vector3(0f, 0f, 0f));
 
         shields.Add(sender, prop);
@@ -399,23 +371,23 @@ public class FreeroamScript : Script
     [Command("attachrpg")]
     public void attachtest1(Client sender)
     {
-        var prop = API.createObject(API.getHashKey("w_lr_rpg"), API.getEntityPosition(sender.handle), new Vector3());
-        API.attachEntityToEntity(prop, sender.handle, "SKEL_SPINE3",
+        var prop = API.CreateObject(API.GetHashKey("w_lr_rpg"), API.GetEntityPosition(sender.Handle), new Vector3());
+        API.AttachEntityToEntity(prop, sender.Handle, "SKEL_SPINE3",
             new Vector3(-0.13f, -0.231f, 0.07f), new Vector3(0f, 200f, 10f));
     }
 
     [Command("colorsrgb")]
     public void CustomVehicleColorsCommand(Client sender, int primaryRed, int primaryGreen, int primaryBlue, int secondaryRed, int secondaryGreen, int secondaryBlue)
     {
-        if (!sender.vehicle.IsNull)
+        if (!sender.Vehicle.IsNull)
         {
-            API.setVehicleCustomPrimaryColor(sender.vehicle, primaryRed, primaryGreen, primaryBlue);
-            API.setVehicleCustomSecondaryColor(sender.vehicle, secondaryRed, secondaryGreen, secondaryBlue);
-            API.sendChatMessageToPlayer(sender, "Colors applied successfully!");
+            API.SetVehicleCustomPrimaryColor(sender.Vehicle, primaryRed, primaryGreen, primaryBlue);
+            API.SetVehicleCustomSecondaryColor(sender.Vehicle, secondaryRed, secondaryGreen, secondaryBlue);
+            API.SendChatMessageToPlayer(sender, "Colors applied successfully!");
         }
         else
         {
-            API.sendChatMessageToPlayer(sender, "~r~ERROR: ~w~You're not in a vehicle!");
+            API.SendChatMessageToPlayer(sender, "~r~ERROR: ~w~You're not in a vehicle!");
         }
     }
 
@@ -428,7 +400,7 @@ public class FreeroamScript : Script
         {
             string helpText = AnimationList.Aggregate(new StringBuilder(),
                             (sb, kvp) => sb.Append(kvp.Key + " "), sb => sb.ToString());
-            API.sendChatMessageToPlayer(sender, "~b~Available animations:");
+            API.SendChatMessageToPlayer(sender, "~b~Available animations:");
             var split = helpText.Split();
             for (int i = 0; i < split.Length; i += 5)
             {
@@ -444,23 +416,23 @@ public class FreeroamScript : Script
                 if (split.Length > i + 4)
                     output += split[i + 4] + " ";
                 if (!string.IsNullOrWhiteSpace(output))
-                    API.sendChatMessageToPlayer(sender, "~b~>> ~w~" + output);
+                    API.SendChatMessageToPlayer(sender, "~b~>> ~w~" + output);
             }
         }
         else if (animation == "stop")
         {
-            API.stopPlayerAnimation(sender);
+            API.StopPlayerAnimation(sender);
         }
         else if (!AnimationList.ContainsKey(animation))
         {
-            API.sendChatMessageToPlayer(sender, "~r~ERROR: ~w~Animation not found!");
+            API.SendChatMessageToPlayer(sender, "~r~ERROR: ~w~Animation not found!");
         }
         else
         {
             var flag = 0;
             if (animation == "handsup") flag = 1;
 
-            API.playPlayerAnimation(sender, flag, AnimationList[animation].Split()[0], AnimationList[animation].Split()[1]);
+            API.PlayPlayerAnimation(sender, flag, AnimationList[animation].Split()[0], AnimationList[animation].Split()[1]);
         }
     }
 
@@ -468,7 +440,7 @@ public class FreeroamScript : Script
     {
         if (client != null)
         {
-            string strClientName = client.name;
+            string strClientName = client.Name;
             if (strClientName.Length <= 8)
                 return strClientName.ToUpper();
         }
@@ -482,144 +454,135 @@ public class FreeroamScript : Script
     }
 
     [Command("car", Alias = "v")]
-    public void SpawnCarCommand(Client sender, VehicleHash model)
+    public void SpawnCarCommand(Client sender, string modelName)
     {
-        if (API.isPlayerInAnyVehicle(sender))
+        if (API.IsPlayerInAnyVehicle(sender))
         {
-            sender.sendChatMessage("~r~Please exit your current vehicle first.");
-            return;
-        }
-        if (BannedVehicles.Contains(model))
-        {
-            sender.sendChatMessage("The vehicle ~r~" + model.ToString() + "~s~ is ~r~banned~s~!");
+            sender.SendChatMessage("~r~Please exit your current vehicle first.");
             return;
         }
 
-        var veh = API.createVehicle(model, sender.position, new Vector3(0, 0, sender.rotation.Z), 0, 0);
-        veh.primaryColor = Rnd.Next(158);
-        veh.secondaryColor = Rnd.Next(158);
-        veh.numberPlate = getRandomNumberPlate(sender);
-        veh.numberPlateStyle = Rnd.Next(6);
+        var model = NAPI.Util.VehicleNameToModel(modelName);
+        if (BannedVehicles.Contains(model))
+        {
+            sender.SendChatMessage("The vehicle ~r~" + model + "~s~ is ~r~banned~s~!");
+            return;
+        }
+
+        var veh = API.CreateVehicle(model, sender.Position, 0f, 0, 0);
+        veh.PrimaryColor = Rnd.Next(158);
+        veh.SecondaryColor = Rnd.Next(158);
+        veh.NumberPlate = getRandomNumberPlate(sender);
+        veh.NumberPlateStyle = Rnd.Next(6);
 
         Handle(sender).VehicleHistory.Add(veh);
         if (Handle(sender).VehicleHistory.Count > 2)
         {
-            API.deleteEntity(Handle(sender).VehicleHistory[0]);
+            API.DeleteEntity(Handle(sender).VehicleHistory[0]);
             Handle(sender).VehicleHistory.RemoveAt(0);
         }
 
-        API.setPlayerIntoVehicle(sender, veh, -1);
+        API.SetPlayerIntoVehicle(sender, veh, -1);
     }
 
     [Command("repair", Alias = "r")]
     public void RepairCarCommand(Client sender)
     {
-        var veh = sender.vehicle;
+        var veh = sender.Vehicle;
         if (veh == null)
             return;
-        veh.repair();
+        veh.Repair();
     }
 
     [Command("clearvehicles", Alias = "vc")]
     public void ClearVehiclesCommand(Client sender)
     {
         foreach (var veh in Handle(sender).VehicleHistory)
-            API.deleteEntity(veh);
+            API.DeleteEntity(veh);
         Handle(sender).VehicleHistory.Clear();
     }
 
     [Command("skin")]
     public void ChangeSkinCommand(Client sender, PedHash model)
     {
-        API.setPlayerSkin(sender, model);
-        API.sendNativeToPlayer(sender, Hash.SET_PED_DEFAULT_COMPONENT_VARIATION, sender.handle);
+        API.SetPlayerSkin(sender, model);
+        API.SendNativeToPlayer(sender, Hash.SET_PED_DEFAULT_COMPONENT_VARIATION, sender.Handle);
     }
 
     [Command("pic")]
     public void SpawnPickupCommand(Client sender, PickupHash pickup)
     {
-        API.createPickup(pickup, new Vector3(sender.position.X + 10, sender.position.Y, sender.position.Z), new Vector3(), 100, 0);
+        API.CreatePickup(pickup, new Vector3(sender.Position.X + 10, sender.Position.Y, sender.Position.Z), new Vector3(), 100, 0);
     }
 
     [Command("tp")]
     public void TeleportPlayerToPlayerCommand(Client sender, Client target)
     {
-        var pos = API.getEntityPosition(sender.handle);
+        var pos = API.GetEntityPosition(sender.Handle);
 
-        API.createParticleEffectOnPosition("scr_rcbarry1", "scr_alien_teleport", pos, new Vector3(), 1f);
+        API.CreateParticleEffectOnPosition("scr_rcbarry1", "scr_alien_teleport", pos, new Vector3(), 1f);
 
-        API.setEntityPosition(sender.handle, API.getEntityPosition(target.handle));
+        API.SetEntityPosition(sender.Handle, API.GetEntityPosition(target.Handle));
     }
 
     [Command("weapon", Alias = "w,gun")]
     public void GiveWeaponCommand(Client sender, WeaponHash weapon)
     {
-        API.givePlayerWeapon(sender, weapon, 9999, true, true);
+        API.GivePlayerWeapon(sender, weapon, 9999);
     }
 
     [Command("weaponcomponent", Alias = "wcomp,wc")]
     public void GiveWeaponComponentCmd(Client sender, WeaponComponent component)
     {
-        API.givePlayerWeaponComponent(sender, API.getPlayerCurrentWeapon(sender), component);
+        API.SetPlayerWeaponComponent(sender, API.GetPlayerCurrentWeapon(sender), component);
     }
 
 
     [Command("weapontint", Alias = "wtint")]
     public void SetWeaponTintCmd(Client sender, WeaponTint tint)
     {
-        API.setPlayerWeaponTint(sender, API.getPlayerCurrentWeapon(sender), tint);
+        API.SetPlayerWeaponTint(sender, API.GetPlayerCurrentWeapon(sender), tint);
     }
 
     [Command("help", Alias = "cmd,h")]
     public void HelpCommand(Client sender)
     {
-        API.sendChatMessageToPlayer(sender, "~h~~g~SERVER~h~~w~: You can press ~h~~g~F1~h~~w~ to open the FREEROAM Menu.");
-        API.sendChatMessageToPlayer(sender, "~h~~g~SERVER~h~~w~: /tp /car /colors /gun /skin /clothes /props /anim /me /suicide");
-        API.sendChatMessageToPlayer(sender, "~h~~g~SERVER~h~~w~: /attachveh /attachlabel /detach /ping /time /online /pm /loadipl");
+        API.SendChatMessageToPlayer(sender, "~h~~g~SERVER~h~~w~: /tp /car /colors /gun /skin /clothes /props /anim /me /suicide");
+        API.SendChatMessageToPlayer(sender, "~h~~g~SERVER~h~~w~: /attachveh /attachlabel /detach /ping /time /online /pm /loadipl");
     }
 
     [Command("online")]
     public void CommandOnline(Client player)
     {
-        API.sendChatMessageToPlayer(player, "~b~Players Online: ~h~~w~" + API.getAllPlayers().Count);
+        API.SendChatMessageToPlayer(player, "~b~Players Online: ~h~~w~" + API.GetAllPlayers().Count);
     }
 
     [Command("ping")]
     public void CommandPing(Client player)
     {
-        API.sendChatMessageToPlayer(player, "~b~Your Ping: ~w~~h~" + player.ping + " ms");
+        API.SendChatMessageToPlayer(player, "~b~Your Ping: ~w~~h~" + player.Ping + " ms");
     }
 
     [Command("time")]
     public void CommandTime(Client player)
     {
-        API.sendChatMessageToPlayer(player, "The time now is ~g~~h~" + DateTime.Now.ToString("HH:mm") + "~h~ (UTC)");
-        API.sendNotificationToPlayer(player, "Current Time: ~g~~h~" + DateTime.Now.ToString("HH:mm") + "~h~ (UTC)");
+        API.SendChatMessageToPlayer(player, "The time now is ~g~~h~" + DateTime.Now.ToString("HH:mm") + "~h~ (UTC)");
+        API.SendNotificationToPlayer(player, "Current Time: ~g~~h~" + DateTime.Now.ToString("HH:mm") + "~h~ (UTC)");
     }
 
     [Command("suicide")]
     public void CommandKill(Client player)
     {
-        API.setPlayerHealth(player, -1);
+        API.SetPlayerHealth(player, -1);
     }
 
     [Command("pm", GreedyArg = true)]
     public void CommandPM(Client player, Client target, string message)
     {
-        API.sendChatMessageToPlayer(player, "~y~PM Sent to ~h~" + target.name + "~h~~w~", message);
-        API.playSoundFrontEnd(player, "Click_Fail", "WEB_NAVIGATION_SOUNDS_PHONE");
-        API.sendChatMessageToPlayer(target, "~y~PM From ~h~" + player.name + "~h~~w~", message);
-        API.playSoundFrontEnd(target, "Click", "DLC_HEIST_HACKING_SNAKE_SOUNDS");
-        return;
-    }
-
-    [Command("save")]
-    public void SaveCommand(Client player, string msg = "")
-    {
-        File.AppendAllText(AppDomain.CurrentDomain.BaseDirectory + "positions.txt",
-            "API.setEntityPosition(player, new Vector3(" + API.getEntityPosition(player.handle).X.ToString() + ", " + API.getEntityPosition(player.handle).Y.ToString() + ", " + API.getEntityPosition(player.handle).Z.ToString() + ")); //" + msg + Environment.NewLine +
-            "API.setEntityRotation(player, new Vector3(0f, 0f, " + API.getEntityRotation(player.handle).Z.ToString() + "));" + Environment.NewLine + Environment.NewLine);
-        API.sendChatMessageToPlayer(player, "Your position has been saved to positions.txt");
+        API.SendChatMessageToPlayer(player, "~y~PM Sent to ~h~" + target.Name + "~h~~w~", message);
+        API.PlaySoundFrontEnd(player, "Click_Fail", "WEB_NAVIGATION_SOUNDS_PHONE");
+        API.SendChatMessageToPlayer(target, "~y~PM From ~h~" + player.Name + "~h~~w~", message);
+        API.PlaySoundFrontEnd(target, "Click", "DLC_HEIST_HACKING_SNAKE_SOUNDS");
     }
 
 }
