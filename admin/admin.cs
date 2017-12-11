@@ -21,11 +21,11 @@ namespace WipRagempResource.admin
         private void Event_OnPlayerConnected(Client player, CancelEventArgs cancel)
         {
             var log = API.LoginPlayer(player, "");
-            if (log == 1)
+            if (log == LoginResult.LoginSuccessful)
             {
                 API.SendChatMessageToPlayer(player, "Logged in as ~b~" + API.GetPlayerAclGroup(player) + "~w~.");
             }
-            else if (log == 2)
+            else if (log == LoginResult.WrongPassword)
             {
                 API.SendChatMessageToPlayer(player, "Please log in with ~b~/login [password]");
             }
@@ -39,22 +39,21 @@ namespace WipRagempResource.admin
         public void Login(Client sender, string password)
         {
             var logResult = API.LoginPlayer(sender, password);
-
             switch (logResult)
             {
-                case 0:
+                case LoginResult.NoAccountFound:
                     API.SendChatMessageToPlayer(sender, "~r~ERROR:~w~ No account found with your name.");
                     break;
-                case 1:
+                case LoginResult.LoginSuccessful:
                     API.SendChatMessageToPlayer(sender, "~g~Login successful!~w~ Logged in as ~b~" + API.GetPlayerAclGroup(sender) + "~w~.");
                     break;
-                case 2:
+                case LoginResult.WrongPassword:
                     API.SendChatMessageToPlayer(sender, "~r~ERROR:~w~ Wrong password!");
                     break;
-                case 4:
+                case LoginResult.AlreadyLoggedIn:
                     API.SendChatMessageToPlayer(sender, "~r~ERROR:~w~ You're already logged in!");
                     break;
-                case 5:
+                case LoginResult.ACLDisabled:
                     API.SendChatMessageToPlayer(sender, "~r~ERROR:~w~ ACL has been disabled on this server.");
                     break;
             }
