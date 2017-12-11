@@ -21,7 +21,7 @@ namespace WipRagempResource.admin
         private void Event_OnPlayerConnected(Client player, CancelEventArgs cancel)
         {
             var log = API.LoginPlayer(player, "");
-            if (log == LoginResult.LoginSuccessful)
+            if (log == LoginResult.LoginSuccessful || log == LoginResult.LoginSuccessfulNoPassword)
             {
                 API.SendChatMessageToPlayer(player, "Logged in as ~b~" + API.GetPlayerAclGroup(player) + "~w~.");
             }
@@ -44,6 +44,8 @@ namespace WipRagempResource.admin
                 case LoginResult.NoAccountFound:
                     API.SendChatMessageToPlayer(sender, "~r~ERROR:~w~ No account found with your name.");
                     break;
+
+                case LoginResult.LoginSuccessfulNoPassword:
                 case LoginResult.LoginSuccessful:
                     API.SendChatMessageToPlayer(sender, "~g~Login successful!~w~ Logged in as ~b~" + API.GetPlayerAclGroup(sender) + "~w~.");
                     break;
