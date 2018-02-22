@@ -1,32 +1,30 @@
 using GTANetworkAPI;
 
-public class WelcomeMsgs : Script
+public class WelcomeMessages : Script
 {
-    public WelcomeMsgs()
+    [ServerEvent(Event.PlayerConnected)]
+    public void OnPlayerConnected(Client player)
     {
-        Event.OnPlayerConnected += onPlayerConnect;
-        Event.OnPlayerDisconnected += onPlayerDisconnect;
+        NAPI.Notification.SendNotificationToAll("~b~~h~" + player.Name + "~h~ ~w~joined.");
+        NAPI.Chat.SendChatMessageToAll("~b~" + player.Name + "~w~ has joined the server.");
     }
 
-    public void onPlayerConnect(Client player, CancelEventArgs e)
+    [ServerEvent(Event.PlayerDisconnected)]
+    public void OnPlayerDisconnected(Client player, DisconnectionType type, string reason)
     {
-        API.SendNotificationToAll("~b~~h~" + player.Name + "~h~ ~w~joined.");
-        API.SendChatMessageToAll("~b~~h~" + player.Name + "~h~~w~ has joined the server.");
-    }
-
-    public void onPlayerDisconnect(Client player, byte type, string reason)
-    {
-        API.SendNotificationToAll("~b~~h~" + player.Name + "~h~ ~w~quit.");
+        NAPI.Notification.SendNotificationToAll("~b~~h~" + player.Name + "~h~ ~w~quit.");
         switch (type)
         {
-            case 1:
-                API.SendChatMessageToAll("~b~~h~" + player.Name + "~h~~w~ has quit the server.");
+            case DisconnectionType.Left:
+                NAPI.Chat.SendChatMessageToAll("~b~" + player.Name + "~w~ has quit the server.");
                 break;
-            case 2:
-                API.SendChatMessageToAll("~b~~h~" + player.Name + "~h~~w~ has timed out.");
+
+            case DisconnectionType.Timeout:
+                NAPI.Chat.SendChatMessageToAll("~b~" + player.Name + "~w~ has timed out.");
                 break;
-            case 3:
-                API.SendChatMessageToAll("~b~~h~" + player.Name + "~h~~w~ has been kicked for ~r~" + reason);
+
+            case DisconnectionType.Kicked:
+                NAPI.Chat.SendChatMessageToAll("~b~" + player.Name + "~w~ has been kicked for " + reason);
                 break;
         }
     }

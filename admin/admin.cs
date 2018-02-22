@@ -1,62 +1,55 @@
 ﻿using System;
 using GTANetworkAPI;
 
-namespace WipRagempResource.admin
+namespace Main
 {
     public class AdminScript : Script
     {
-        public AdminScript()
-        {
-            Event.OnPlayerConnected += Event_OnPlayerConnected;
-            Event.OnPlayerDisconnected += EventOnOnPlayerDisconnected;
-        }
-
         #region Events
-        
-        private void EventOnOnPlayerDisconnected(Client player, byte type, string reason)
+        [ServerEvent(Event.PlayerConnected)]
+        public void OnPlayerConnected(Client player)
         {
-            API.LogoutPlayer(player);
-        }
-
-        private void Event_OnPlayerConnected(Client player, CancelEventArgs cancel)
-        {
-            var log = API.LoginPlayer(player, "");
+            var log = NAPI.ACL.LoginPlayer(player, "");
             if (log == LoginResult.LoginSuccessful || log == LoginResult.LoginSuccessfulNoPassword)
             {
-                API.SendChatMessageToPlayer(player, "Logged in as ~b~" + API.GetPlayerAclGroup(player) + "~w~.");
+                NAPI.Chat.SendChatMessageToPlayer(player, "Logged in as ~b~" + NAPI.ACL.GetPlayerAclGroup(player) + "~w~.");
             }
             else if (log == LoginResult.WrongPassword)
             {
-                API.SendChatMessageToPlayer(player, "Please log in with ~b~/login [password]");
+                NAPI.Chat.SendChatMessageToPlayer(player, "Please log in with ~b~/login [password]");
             }
         }
 
+        [ServerEvent(Event.PlayerDisconnected)]
+        public void OnPlayerDisconnected(Client player, DisconnectionType type, string reason)
+        {
+            NAPI.ACL.LogoutPlayer(player);
+        }
         #endregion
 
         #region Commands
-
         [Command(SensitiveInfo = true, ACLRequired = true)]
         public void Login(Client sender, string password)
         {
-            var logResult = API.LoginPlayer(sender, password);
+            var logResult = NAPI.ACL.LoginPlayer(sender, password);
             switch (logResult)
             {
                 case LoginResult.NoAccountFound:
-                    API.SendChatMessageToPlayer(sender, "~r~ERROR:~w~ No account found with your name.");
+                    NAPI.Chat.SendChatMessageToPlayer(sender, "~r~ERROR:~w~ No account found with your name.");
                     break;
 
                 case LoginResult.LoginSuccessfulNoPassword:
                 case LoginResult.LoginSuccessful:
-                    API.SendChatMessageToPlayer(sender, "~g~Login successful!~w~ Logged in as ~b~" + API.GetPlayerAclGroup(sender) + "~w~.");
+                    NAPI.Chat.SendChatMessageToPlayer(sender, "~g~Login successful!~w~ Logged in as ~b~" + NAPI.ACL.GetPlayerAclGroup(sender) + "~w~.");
                     break;
                 case LoginResult.WrongPassword:
-                    API.SendChatMessageToPlayer(sender, "~r~ERROR:~w~ Wrong password!");
+                    NAPI.Chat.SendChatMessageToPlayer(sender, "~r~ERROR:~w~ Wrong password!");
                     break;
                 case LoginResult.AlreadyLoggedIn:
-                    API.SendChatMessageToPlayer(sender, "~r~ERROR:~w~ You're already logged in!");
+                    NAPI.Chat.SendChatMessageToPlayer(sender, "~r~ERROR:~w~ You're already logged in!");
                     break;
                 case LoginResult.ACLDisabled:
-                    API.SendChatMessageToPlayer(sender, "~r~ERROR:~w~ ACL has been disabled on this server.");
+                    NAPI.Chat.SendChatMessageToPlayer(sender, "~r~ERROR:~w~ ACL has been disabled on this server.");
                     break;
             }
         }
@@ -64,82 +57,82 @@ namespace WipRagempResource.admin
         [Command(ACLRequired = true)]
         public void SetTime(Client sender, int hours, int minutes)
         {
-            API.SetTime(hours, minutes, 0);
+            NAPI.World.SetTime(hours, minutes, 0);
         }
 
         [Command(ACLRequired = true)]
         public void SetWeather(Client sender, int newWeather)
         {
-            API.SetWeather(newWeather);
+            NAPI.World.SetWeather((Weather)newWeather);
         }
 
         [Command(ACLRequired = true)]
         public void Logout(Client sender)
         {
-            API.LogoutPlayer(sender);
+            NAPI.ACL.LogoutPlayer(sender);
         }
 
         [Command(ACLRequired = true)]
         public void Start(Client sender, string resource)
         {
-            if (!API.DoesResourceExist(resource))
+            if (!NAPI.Resource.DoesResourceExist(resource))
             {
-                API.SendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
+                NAPI.Chat.SendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
             }
-            else if (API.IsResourceRunning(resource))
+            else if (NAPI.Resource.IsResourceRunning(resource))
             {
-                API.SendChatMessageToPlayer(sender, "~r~Resource \"" + resource + "\" is already running!");
+                NAPI.Chat.SendChatMessageToPlayer(sender, "~r~Resource \"" + resource + "\" is already running!");
             }
             else
             {
-                API.StartResource(resource);
-                API.SendChatMessageToPlayer(sender, "~g~Started resource \"" + resource + "\"");
+                NAPI.Resource.StartResource(resource);
+                NAPI.Chat.SendChatMessageToPlayer(sender, "~g~Started resource \"" + resource + "\"");
             }
         }
 
         [Command(ACLRequired = true)]
         public void Stop(Client sender, string resource)
         {
-            if (!API.DoesResourceExist(resource))
+            if (!NAPI.Resource.DoesResourceExist(resource))
             {
-                API.SendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
+                NAPI.Chat.SendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
             }
-            else if (!API.IsResourceRunning(resource))
+            else if (!NAPI.Resource.IsResourceRunning(resource))
             {
-                API.SendChatMessageToPlayer(sender, "~r~Resource \"" + resource + "\" is not running!");
+                NAPI.Chat.SendChatMessageToPlayer(sender, "~r~Resource \"" + resource + "\" is not running!");
             }
             else
             {
-                API.StopResource(resource);
-                API.SendChatMessageToPlayer(sender, "~g~Stopped resource \"" + resource + "\"");
+                NAPI.Resource.StopResource(resource);
+                NAPI.Chat.SendChatMessageToPlayer(sender, "~g~Stopped resource \"" + resource + "\"");
             }
         }
 
         [Command(ACLRequired = true)]
         public void Restart(Client sender, string resource)
         {
-            if (API.DoesResourceExist(resource))
+            if (NAPI.Resource.DoesResourceExist(resource))
             {
-                API.StopResource(resource);
-                API.StartResource(resource);
-                API.SendChatMessageToPlayer(sender, "~g~Restarted resource \"" + resource + "\"");
+                NAPI.Resource.StopResource(resource);
+                NAPI.Resource.StartResource(resource);
+                NAPI.Chat.SendChatMessageToPlayer(sender, "~g~Restarted resource \"" + resource + "\"");
             }
             else
             {
-                API.SendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
+                NAPI.Chat.SendChatMessageToPlayer(sender, "~r~No such resource found: \"" + resource + "\"");
             }
         }
 
         [Command(GreedyArg = true, ACLRequired = true)]
         public void Kick(Client sender, Client target, string reason)
         {
-            API.KickPlayer(target, reason);
+            NAPI.Player.KickPlayer(target, reason);
         }
 
         [Command(ACLRequired = true)]
         public void Kill(Client sender, Client target)
         {
-            API.SetPlayerHealth(target, -1);
+            NAPI.Player.SetPlayerHealth(target, -1);
         }
         #endregion
     }

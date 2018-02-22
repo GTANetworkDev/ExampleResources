@@ -25,19 +25,17 @@ public class Deathmatch : Script
 
     public static List<WeaponHash> Weapons = new List<WeaponHash> { WeaponHash.MicroSMG, WeaponHash.PumpShotgun, WeaponHash.CarbineRifle };
     public static Dictionary<Client, int> Killstreaks = new Dictionary<Client, int>();
-    public static Random _rand = new Random();
+    public static Random Rand = new Random();
     public static int KillTarget;
 
     public Deathmatch()
     {
-        Event.OnPlayerConnected += OnPlayerConnected;
-        Event.OnResourceStop += OnResourceStop;
-        Event.OnResourceStart += OnResourceStart;
-        Event.OnMapChange += OnMapChange;
-        Event.OnPlayerDeath += OnPlayerDeath;
+        NAPI.Server.SetAutoSpawnOnConnect(false);
+        NAPI.Server.SetAutoRespawnAfterDeath(false);
     }
 
-    private void OnMapChange(string mapName, XmlGroup map)
+    [ServerEvent(Event.MapChange)]
+    public void OnMapChange(string mapName, XmlGroup map)
     {
         Console.WriteLine("OnMapChange");
         Spawns.Clear();
@@ -52,86 +50,88 @@ public class Deathmatch : Script
         var availableGuns = map.getElementsByType("weapon");
         foreach (var point in availableGuns)
         {
-            Weapons.Add(API.WeaponNameToModel(point.getElementData<string>("model")));
+            Weapons.Add(NAPI.Util.WeaponNameToModel(point.getElementData<string>("model")));
         }
 
-        API.ResetIplList();
+        NAPI.World.ResetIplList();
 
         var neededInteriors = map.getElementsByType("ipl");
         foreach (var point in neededInteriors)
         {
-            API.RequestIpl(point.getElementData<string>("name"));
+            NAPI.World.RequestIpl(point.getElementData<string>("name"));
         }
 
-        foreach (var player in API.GetAllPlayers())
+        foreach (var player in NAPI.Pools.GetAllPlayers())
         {
-            var pBlip = API.Exported.playerblips.getPlayerBlip(player);
-            API.SetBlipSprite(pBlip, 1);
-            API.SetBlipColor(pBlip, 0);
+            var pBlip = NAPI.Exported.playerblips.getPlayerBlip(player);
+            NAPI.Blip.SetBlipSprite(pBlip, 1);
+            NAPI.Blip.SetBlipColor(pBlip, 0);
 
             Spawn(player);
         }
     }
 
-    private void OnResourceStart()
+    [ServerEvent(Event.ResourceStart)]
+    public void OnResourceStart()
     {
-        foreach (var player in API.GetAllPlayers())
+        foreach (var player in NAPI.Pools.GetAllPlayers())
         {
             Spawn(player);
-            API.SetEntityData(player.Handle, "dm_score", 0);
-            API.SetEntityData(player.Handle, "dm_deaths", 0);
-            API.SetEntityData(player.Handle, "dm_kills", 0);
-            API.SetEntityData(player.Handle, "dm_kdr", 0);
+            NAPI.Data.SetEntityData(player.Handle, "dm_score", 0);
+            NAPI.Data.SetEntityData(player.Handle, "dm_deaths", 0);
+            NAPI.Data.SetEntityData(player.Handle, "dm_kills", 0);
+            NAPI.Data.SetEntityData(player.Handle, "dm_kdr", 0);
         }
 
-        KillTarget = API.GetSetting<int>(this, "victory_kills");
+        KillTarget = NAPI.Resource.GetSetting<int>(this, "victory_kills");
     }
 
-    private void OnResourceStop()
+    [ServerEvent(Event.ResourceStop)]
+    public void OnResourceStop()
     {
-        foreach (var player in API.GetAllPlayers())
+        foreach (var player in NAPI.Pools.GetAllPlayers())
         {
-            var pBlip = API.Exported.playerblips.getPlayerBlip(player);
+            var pBlip = NAPI.Exported.playerblips.getPlayerBlip(player);
 
-            API.SetBlipSprite(pBlip, 1);
-            API.SetBlipColor(pBlip, 0);
+            NAPI.Blip.SetBlipSprite(pBlip, 1);
+            NAPI.Blip.SetBlipColor(pBlip, 0);
 
-            API.ResetEntityData(player.Handle, "dm_score");
-            API.ResetEntityData(player.Handle, "dm_deaths");
-            API.ResetEntityData(player.Handle, "dm_kills");
-            API.ResetEntityData(player.Handle, "dm_kdr");
+            NAPI.Data.ResetEntityData(player.Handle, "dm_score");
+            NAPI.Data.ResetEntityData(player.Handle, "dm_deaths");
+            NAPI.Data.ResetEntityData(player.Handle, "dm_kills");
+            NAPI.Data.ResetEntityData(player.Handle, "dm_kdr");
         }
     }
 
-    public void OnPlayerConnected(Client player, CancelEventArgs e)
+    [ServerEvent(Event.PlayerConnected)]
+    public void OnPlayerConnected(Client player)
     {
-        API.SetEntityData(player.Handle, "dm_score", 0);
-        API.SetEntityData(player.Handle, "dm_deaths", 0);
-        API.SetEntityData(player.Handle, "dm_kills", 0);
-        API.SetEntityData(player.Handle, "dm_kdr", 0);
-        e.Spawn = false;
+        NAPI.Data.SetEntityData(player.Handle, "dm_score", 0);
+        NAPI.Data.SetEntityData(player.Handle, "dm_deaths", 0);
+        NAPI.Data.SetEntityData(player.Handle, "dm_kills", 0);
+        NAPI.Data.SetEntityData(player.Handle, "dm_kdr", 0);
         Spawn(player);
     }
 
     public void Spawn(Client player)
     {
-        var randSpawn = Spawns[_rand.Next(Spawns.Count)];
-        API.SpawnPlayer(player, randSpawn);
+        var randSpawn = Spawns[Rand.Next(Spawns.Count)];
+        NAPI.Player.SpawnPlayer(player, randSpawn);
 
-        API.RemoveAllPlayerWeapons(player);
-        Weapons.ForEach(gun => API.GivePlayerWeapon(player, gun, 500));
+        NAPI.Player.RemoveAllPlayerWeapons(player);
+        Weapons.ForEach(gun => NAPI.Player.GivePlayerWeapon(player, gun, 500));
 
-        API.SetPlayerHealth(player, 100);
+        NAPI.Player.SetPlayerHealth(player, 100);
     }
 
-    public void OnPlayerDeath(Client player, NetHandle entitykiller, uint weapon, CancelEventArgs e)
+    [ServerEvent(Event.PlayerDeath)]
+    public void OnPlayerDeath(Client player, NetHandle entitykiller, uint weapon)
     {
-        e.Cancel = true;
         Client killer = null;
 
         if (!entitykiller.IsNull)
         {
-            foreach (var ply in API.GetAllPlayers())
+            foreach (var ply in NAPI.Pools.GetAllPlayers())
             {
                 if (ply.Handle != entitykiller) continue;
                 killer = ply;
@@ -139,22 +139,22 @@ public class Deathmatch : Script
             }
         }
 
-        API.SetEntityData(player.Handle, "dm_score", API.GetEntitySharedData(player.Handle, "dm_score") - 1);
-        API.SetEntityData(player.Handle, "dm_deaths", API.GetEntitySharedData(player.Handle, "dm_deaths") + 1);
-        API.SetEntityData(player.Handle, "dm_kdr", API.GetEntitySharedData(player.Handle, "dm_kills") / (float)API.GetEntitySharedData(player.Handle, "dm_deaths"));
+        NAPI.Data.SetEntityData(player.Handle, "dm_score", NAPI.Data.GetEntitySharedData(player.Handle, "dm_score") - 1);
+        NAPI.Data.SetEntityData(player.Handle, "dm_deaths", NAPI.Data.GetEntitySharedData(player.Handle, "dm_deaths") + 1);
+        NAPI.Data.SetEntityData(player.Handle, "dm_kdr", NAPI.Data.GetEntitySharedData(player.Handle, "dm_kills") / (float)NAPI.Data.GetEntitySharedData(player.Handle, "dm_deaths"));
 
         if (killer != null)
         {
-            API.SetEntityData(killer.Handle, "dm_kills", API.GetEntitySharedData(killer.Handle, "dm_kills") + 1);
-            API.SetEntityData(killer.Handle, "dm_score", API.GetEntitySharedData(killer.Handle, "dm_score") + 1);
-            if (API.GetEntitySharedData(killer.Handle, "dm_deaths") != 0)
+            NAPI.Data.SetEntityData(killer.Handle, "dm_kills", NAPI.Data.GetEntitySharedData(killer.Handle, "dm_kills") + 1);
+            NAPI.Data.SetEntityData(killer.Handle, "dm_score", NAPI.Data.GetEntitySharedData(killer.Handle, "dm_score") + 1);
+            if (NAPI.Data.GetEntitySharedData(killer.Handle, "dm_deaths") != 0)
             {
-                API.SetEntityData(killer.Handle, "dm_kdr", API.GetEntitySharedData(killer.Handle, "dm_kills") / (float)API.GetEntitySharedData(killer.Handle, "dm_deaths"));
+                NAPI.Data.SetEntityData(killer.Handle, "dm_kdr", NAPI.Data.GetEntitySharedData(killer.Handle, "dm_kills") / (float)NAPI.Data.GetEntitySharedData(killer.Handle, "dm_deaths"));
             }
 
-            if (API.GetEntitySharedData(killer.Handle, "dm_kills") >= KillTarget)
+            if (NAPI.Data.GetEntitySharedData(killer.Handle, "dm_kills") >= KillTarget)
             {
-                API.SendChatMessageToAll($"~b~~h~{killer.Name}~h~~w~ has won the round with ~h~{KillTarget}~h~ kills and {API.GetEntitySharedData(player.Handle, "dm_deaths")} deaths!");
+                NAPI.Chat.SendChatMessageToAll($"~b~~h~{killer.Name}~h~~w~ has won the round with ~h~{KillTarget}~h~ kills and {NAPI.Data.GetEntitySharedData(player.Handle, "dm_deaths")} deaths!");
                 //API.Exported.mapcycler.endRound();
             }
 
@@ -163,41 +163,41 @@ public class Deathmatch : Script
                 Killstreaks[killer]++;
                 if (Killstreaks[killer] >= 3)
                 {
-                    var kBlip = API.Exported.playerblips.getPlayerBlip(killer);
-                    API.SetBlipSprite(kBlip, 303);
-                    API.SetBlipColor(kBlip, 1);
+                    var kBlip = NAPI.Exported.playerblips.getPlayerBlip(killer);
+                    NAPI.Blip.SetBlipSprite(kBlip, 303);
+                    NAPI.Blip.SetBlipColor(kBlip, 1);
 
-                    API.SendChatMessageToAll($"~b~{killer.Name}~w~ is on a killstreak! ~r~{Killstreaks[killer]}~w~ kills and counting!");
+                    NAPI.Chat.SendChatMessageToAll($"~b~{killer.Name}~w~ is on a killstreak! ~r~{Killstreaks[killer]}~w~ kills and counting!");
                     switch (Killstreaks[killer])
                     {
                         case 4:
-                            API.SetPlayerHealth(killer, Math.Min(100, API.GetPlayerHealth(killer) + 25));
-                            API.SendChatMessageToPlayer(killer, "~g~Health bonus!");
+                            NAPI.Player.SetPlayerHealth(killer, Math.Min(100, NAPI.Player.GetPlayerHealth(killer) + 25));
+                            NAPI.Chat.SendChatMessageToPlayer(killer, "~g~Health bonus!");
                             break;
 
                         case 6:
-                            API.SetPlayerHealth(killer, Math.Min(100, API.GetPlayerHealth(killer) + 50));
-                            API.SendChatMessageToPlayer(killer, "~g~Health bonus!");
+                            NAPI.Player.SetPlayerHealth(killer, Math.Min(100, NAPI.Player.GetPlayerHealth(killer) + 50));
+                            NAPI.Chat.SendChatMessageToPlayer(killer, "~g~Health bonus!");
                             break;
 
                         case 8:
-                            API.SetPlayerHealth(killer, Math.Min(100, API.GetPlayerHealth(killer) + 75));
-                            API.SetPlayerArmor(killer, Math.Min(100, API.GetPlayerArmor(killer) + 25));
-                            API.SendChatMessageToPlayer(killer, "~g~Health and armor bonus!");
+                            NAPI.Player.SetPlayerHealth(killer, Math.Min(100, NAPI.Player.GetPlayerHealth(killer) + 75));
+                            NAPI.Player.SetPlayerArmor(killer, Math.Min(100, NAPI.Player.GetPlayerArmor(killer) + 25));
+                            NAPI.Chat.SendChatMessageToPlayer(killer, "~g~Health and armor bonus!");
                             break;
 
                         case 12:
-                            API.SetPlayerHealth(killer, Math.Min(100, API.GetPlayerHealth(killer) + 75));
-                            API.SetPlayerArmor(killer, Math.Min(100, API.GetPlayerArmor(killer) + 50));
-                            API.SendChatMessageToPlayer(killer, "~g~Health and armor bonus!");
+                            NAPI.Player.SetPlayerHealth(killer, Math.Min(100, NAPI.Player.GetPlayerHealth(killer) + 75));
+                            NAPI.Player.SetPlayerArmor(killer, Math.Min(100, NAPI.Player.GetPlayerArmor(killer) + 50));
+                            NAPI.Chat.SendChatMessageToPlayer(killer, "~g~Health and armor bonus!");
                             break;
 
                         default:
                             if (Killstreaks[killer] >= 16 && Killstreaks[killer] % 4 == 0)
                             {
-                                API.SetPlayerHealth(killer, Math.Min(100, API.GetPlayerHealth(killer) + 75));
-                                API.SetPlayerArmor(killer, Math.Min(100, API.GetPlayerArmor(killer) + 75));
-                                API.SendChatMessageToPlayer(killer, "~g~Health and armor bonus!");
+                                NAPI.Player.SetPlayerHealth(killer, Math.Min(100, NAPI.Player.GetPlayerHealth(killer) + 75));
+                                NAPI.Player.SetPlayerArmor(killer, Math.Min(100, NAPI.Player.GetPlayerArmor(killer) + 75));
+                                NAPI.Chat.SendChatMessageToPlayer(killer, "~g~Health and armor bonus!");
                             }
                             break;
                     }
@@ -209,14 +209,14 @@ public class Deathmatch : Script
             }
         }
 
-        var pBlip = API.Exported.playerblips.getPlayerBlip(player);
+        var pBlip = NAPI.Exported.playerblips.getPlayerBlip(player);
         if (Killstreaks.ContainsKey(player))
         {
             if (Killstreaks[player] >= 3 && killer != null)
             {
-                API.SendChatMessageToAll($"~b~{killer.Name}~w~ ruined ~r~{player.Name}~w~'s killstreak!");
-                API.SetBlipColor(pBlip, 0);
-                API.SetBlipSprite(pBlip, 1);
+                NAPI.Chat.SendChatMessageToAll($"~b~{killer.Name}~w~ ruined ~r~{player.Name}~w~'s killstreak!");
+                NAPI.Blip.SetBlipColor(pBlip, 0);
+                NAPI.Blip.SetBlipSprite(pBlip, 1);
             }
             Killstreaks[player] = 0;
         }
@@ -225,7 +225,7 @@ public class Deathmatch : Script
             Killstreaks.Add(player, 0);
         }
 
-        API.SetBlipSprite(pBlip, 274);
+        NAPI.Blip.SetBlipSprite(pBlip, 274);
         Spawn(player);
     }
 }

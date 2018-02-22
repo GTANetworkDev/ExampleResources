@@ -1,5 +1,4 @@
 <meta>
-    <info name="Welcome Messages" author="Guadmaz" type="script" async="true" />
-    
-    <script src="welcomemessages.cs" type="server" lang="csharp" />
+    <info name="Welcome Messages" type="script" />
+    <script src="welcomemessages.cs" />
 </meta>
