@@ -1,5 +1,5 @@
 ﻿<meta>
-  <info name="Mines" description="Test resource to play around with mines" />
+  <info name="Mines" description="Test resource to play around with mines" type="script" />
 
   <script src="mines.cs"/>
 </meta>
