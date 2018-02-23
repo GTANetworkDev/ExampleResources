@@ -1,47 +1,38 @@
-﻿namespace WipRagempResource.mines
+using GTANetworkAPI;
+
+public class MinesScript : Script
 {
-    using GTANetworkAPI;
-
-    public class MinesTest : Script
+    [ServerEvent(Event.ResourceStart)]
+    public void MyResourceStart()
     {
-        public MinesTest()
+        NAPI.Util.ConsoleOutput("Mines resource started!");
+    }
+
+    [Command("mine")]
+    public void PlaceMine(Client sender, float mineRange = 10f)
+    {
+        var playerPos = NAPI.Entity.GetEntityPosition(sender);
+        var playerDimension = NAPI.Entity.GetEntityDimension(sender);
+        var minePropHash = NAPI.Util.GetHashKey("prop_bomb_01");
+        var mineProp = NAPI.Object.CreateObject(minePropHash, playerPos - new Vector3(0, 0, 1f), new Vector3(), dimension: playerDimension);
+        var colShape = NAPI.ColShape.CreateSphereColShape(playerPos, mineRange, playerDimension);
+        var isMineArmed = false;
+
+        colShape.OnEntityEnterColShape += (s, ent) =>
         {
+            if (!isMineArmed) return;
 
-        }
+            NAPI.Explosion.CreateOwnedExplosion(sender, ExplosionType.HiOctane, playerPos, 1f, playerDimension);
+            NAPI.Entity.DeleteEntity(mineProp);
+            NAPI.ColShape.DeleteColShape(colShape);
+        };
 
-        [ServerEvent(Event.ResourceStart)]
-        public void MyResourceStart()
+        colShape.OnEntityExitColShape += (s, ent) =>
         {
-            NAPI.Util.ConsoleOutput("Starting mines!");
-        }
+            if (isMineArmed) return;
 
-        [Command("mine")]
-        public void PlaceMine(Client sender, float MineRange = 10f)
-        {
-            var pos = NAPI.Entity.GetEntityPosition(sender);
-            var playerDimension = NAPI.Entity.GetEntityDimension(sender);
-            var prop = NAPI.Object.CreateObject((int) NAPI.Util.GetHashKey("prop_bomb_01"), pos - new Vector3(0, 0, 1f), (Quaternion) new Vector3(), playerDimension);
-            var shape = NAPI.ColShape.CreateSphereColShape(pos, MineRange);
-            shape.Dimension = playerDimension;
-
-            bool mineArmed = false;
-
-            shape.OnEntityEnterColShape += (s, ent) =>
-            {
-                if (!mineArmed) return;
-                NAPI.Explosion.CreateOwnedExplosion(sender, ExplosionType.HiOctane, pos, 1f, playerDimension);
-                NAPI.Entity.DeleteEntity(prop);
-                NAPI.ColShape.DeleteColShape(shape);
-            };
-
-            shape.OnEntityExitColShape += (s, ent) =>
-            {
-                if (ent == sender.Handle && !mineArmed)
-                {
-                    mineArmed = true;
-                    NAPI.Notification.SendNotificationToPlayer(sender, "Mine has been ~r~armed~w~!", true);
-                }
-            };
-        }
+            isMineArmed = true;
+            NAPI.Notification.SendNotificationToPlayer(sender, "Mine has been ~r~armed~w~!", true);
+        };
     }
 }
