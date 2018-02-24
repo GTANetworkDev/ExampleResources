@@ -1,0 +1,6 @@
+<meta>
+    <info name="Basic vehicle sync script" type="script"/>
+	<script src="VehicleSync.cs"/>
+	<script src="ExampleSync.cs"/>
+	<assembly ref="Newtonsoft.Json.dll"/>
+</meta>
