@@ -121,7 +121,7 @@ mp.events.add("render", () =>
 					mp.game.controls.disableControlAction(0, 72, true);
 				}
 				
-				if((isControl71Pressed && !isControl72Pressed) || isControl76Pressed || (isControl72Pressed && !isControl71Pressed))
+				if((isControl71Pressed && !isControl72Pressed) || isControl76Pressed)
 				{
 					mp.players.local.vehicle.setBrakeLights(false);
 				}
